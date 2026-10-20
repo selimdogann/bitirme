@@ -1,0 +1,23 @@
+# Her PR'da ve main'e her birleştirmede kod stilini kontrol eder.
+# Başarısız olursa yerelde düzeltmek için:
+#   uv run ruff check --fix .   ve   uv run ruff format .
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  lint:
+    name: Kod stili (ruff)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - name: Bağımlılıkları kur
+        run: uv sync --locked
+      - name: Hata kontrolü
+        run: uv run ruff check .
+      - name: Biçim kontrolü
+        run: uv run ruff format --check .
