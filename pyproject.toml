@@ -1,0 +1,23 @@
+[project]
+name = "ilac-asistani"
+version = "0.1.0"
+description = "Türkçe İlaç Asistanı: resmî kullanma talimatlarında hibrit arama ile kaynak gösteren soru-cevap"
+requires-python = ">=3.12"
+dependencies = [
+    "streamlit>=1.66.0",
+]
+
+[dependency-groups]
+dev = [
+    "ruff>=0.17.1",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+# Dokümanlardaki kod örnekleri bilerek hizalı yazıldı, biçimlendirilmez
+extend-exclude = ["*.md"]
+
+[tool.ruff.lint]
+# E/F: temel hatalar, I: import sırası, UP: modern Python söz dizimi, B: sık yapılan hatalar
+select = ["E", "F", "I", "UP", "B"]
