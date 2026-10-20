@@ -1,39 +1,57 @@
-# Hibrit RAG: Bitirme Projesi
+# Türkçe İlaç Asistanı
 
-> **Ekip:** Selim Doğan · Zehra
-> **Bölüm:** Kocaeli Üniversitesi, Bilgisayar Mühendisliği
-> **Dönem:** 2026–2027
-> **Durum:** Faz 0, Hazırlık
+> **Ekip:** Selim Doğan · Zehra Çetin
+> **Danışman:** Prof. Dr. Sevinç İlhan Omurca
+> **Bölüm:** Kocaeli Üniversitesi, Bilgisayar Mühendisliği · 2026–2027
+> **Durum:** Aşama 0, Altyapı
 
 ## Proje tek cümlede
 
-Seçeceğimiz bir sektörün belgelerinde **anahtar kelime araması (BM25)** ile **vektörel (anlamsal) aramayı** birleştiren, **farklı birleştirme (fusion) yöntemlerini ölçerek karşılaştıran** ve kullanıcının sorusuna **kaynak göstererek** cevap veren, gerçek kullanıma hazır bir **Hibrit RAG** sistemi.
+Resmî ilaç kullanma talimatlarında **kelime araması (BM25)** ile **anlam aramasını (vektör)** birleştiren **hibrit arama** sayesinde kullanıcının sorusuyla ilgili bölümü bulan, **sade Türkçe** bir cevap veren, **kaynak paragrafı gösteren** ve kanıt yoksa **cevap uydurmayan** bir asistan.
 
 ```
-              ┌─► BM25 (kelime eşleşmesi) ─┐
-Soru ─► Ön işleme                           ├─► Birleştirme ─► Yeniden sıralama ─► LLM ─► Kaynaklı cevap
-              └─► Vektör (anlam benzerliği)┘     (RRF, ağırlıklı, ...)
+                  ┌─► BM25 (ilaç adı, doz gibi kesin terimler) ─┐
+Kullanıcı sorusu ─┤                                              ├─► Birleştir ─► En uygun paragraflar
+                  └─► Vektör (doğal dille sorulan sorular) ──────┘                      │
+                                                                                         ▼
+                                          Kanıt yeterli mi? ── Hayır ──► "Talimatta bu bilgi yok"
+                                                │ Evet
+                                                ▼
+                                  Sade Türkçe cevap + kaynak paragraf
+```
+
+> Tıbbi tavsiye vermez. Cevaplar yalnızca kullanma talimatındaki bilgiye dayanır.
+
+## Hızlı başlangıç
+
+Gereken tek araç [uv](https://docs.astral.sh/uv/). Python 3.12'yi ve kütüphaneleri uv kurar.
+
+```bash
+git clone https://github.com/selimdogann/bitirme.git
+cd bitirme
+uv sync                        # ortamı kur
+uv run streamlit run app.py    # arayüzü aç: http://localhost:8501
 ```
 
 ## Dokümanlar
 
-Bu repo projenin **kodunu ve öğrenme rehberini** birlikte tutar. Dokümanları aşağıdaki sırayla okuyun.
+| # | Doküman | İçerik |
+|---|---|---|
+| 1 | [Proje Tanımı](docs/01-proje-tanimi.md) | Hocanın istediği, bizim amacımız, araştırma soruları, kapsam, hocaya sorular |
+| 2 | [Temel Kavramlar](docs/02-temel-kavramlar.md) | RAG, BM25, embedding, hibrit arama, reranking: sıfırdan anlatım |
+| 3 | [Mimari](docs/03-mimari.md) | Bileşenler, veri akışı, dosya yapısı, cevap verme kuralı |
+| 4 | [Teknolojiler](docs/04-teknolojiler.md) | Hangi araç ne işe yarıyor, neden seçildi |
+| 5 | [Korpus ve Veri](docs/05-korpus-arastirmasi.md) | Kullanma talimatları, soru-cevap veri setleri, hukuki kontroller |
+| 6 | [Birleştirme Yöntemleri](docs/06-birlestirme-yontemleri.md) | RRF, doğrusal birleştirme ve diğerleri |
+| 7 | [Değerlendirme](docs/07-degerlendirme.md) | Test seti, arama ve cevap metrikleri, cevap vermeme ölçümü |
+| 8 | [Yol Haritası](docs/08-yol-haritasi.md) | Aşamalar, görevler, "bitti sayılır" koşulları |
+| 9 | [Çalışma Düzeni](docs/09-calisma-duzeni.md) | Dal, commit ve PR akışı, görev paylaşımı, yapay zekâ kuralları |
+| 10 | [Kaynaklar ve Sözlük](docs/10-kaynaklar-ve-sozluk.md) | Makaleler, veri setleri, terimler |
 
-| # | Doküman | İçerik | Ne zaman okunur |
-|---|---|---|---|
-| 1 | [Proje Tanımı](docs/01-proje-tanimi.md) | Hocanın istediği, bizim istediğimiz, kapsam, başarı ölçütleri | İlk gün |
-| 2 | [Temel Kavramlar](docs/02-temel-kavramlar.md) | RAG, BM25, embedding, vektör DB, fusion, reranking: sıfırdan anlatım | İlk hafta |
-| 3 | [Mimari](docs/03-mimari.md) | Sistem bileşenleri, veri akışı, klasör yapısı, arayüzler | Faz 0 sonunda |
-| 4 | [Teknolojiler](docs/04-teknolojiler.md) | Hangi araç, neden, alternatifi ne, ne zaman öğrenilecek | Faz 0 sonunda |
-| 5 | [Korpus Araştırması](docs/05-korpus-arastirmasi.md) | Açık veri kaynakları, sektör seçimi, puanlama tablosu | Faz 1 |
-| 6 | [Birleştirme Yöntemleri](docs/06-birlestirme-yontemleri.md) | RRF'den öğrenerek sıralamaya tüm fusion yöntemleri | Faz 5–6 |
-| 7 | [Değerlendirme](docs/07-degerlendirme.md) | Test seti, metrikler, deney protokolü | Faz 2'den itibaren |
-| 8 | [Yol Haritası](docs/08-yol-haritasi.md) | Faz faz görevler, öğrenme hedefleri, teslimler | Her faz başında |
-| 9 | [Çalışma Düzeni](docs/09-calisma-duzeni.md) | Git akışı, görev paylaşımı, yapay zekâ kullanım kuralları | İlk gün |
-| 10 | [Kaynaklar ve Sözlük](docs/10-kaynaklar-ve-sozluk.md) | Makaleler, dokümantasyonlar, terimler | Gerektikçe |
+## Nasıl çalışıyoruz?
+
+`main` dalı korumalı. Her değişiklik kendi dalında yapılır ve Pull Request ile birleşir. Ayrıntılar: [Çalışma Düzeni](docs/09-calisma-duzeni.md).
 
 ## Temel ilkemiz
 
-> **Bu projede her satırı biz anlayacağız.** Hazır bir kütüphaneyi kullanmadan önce o kütüphanenin yaptığını bir kez kendimiz yazacağız. Hiçbir kod, ikimiz de anlatamıyorsak `main`'e girmeyecek.
-
-Ayrıntılar: [Çalışma Düzeni → Sahiplik kuralları](docs/09-calisma-duzeni.md#95-sahiplik-ve-yapay-zekâ-kullanım-kuralları)
+> **Bu projede her satırı biz anlayacağız.** Çekirdek parçaları (arama, birleştirme, ölçüm) önce kendimiz yazıp sonra hazır kütüphanelerle doğrulayacağız. İkimizin de anlatamadığı hiçbir kod `main`'e girmeyecek.

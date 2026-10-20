@@ -4,97 +4,96 @@ Bu doküman üç soruya cevap verir: **Hoca ne istiyor? Biz ne istiyoruz? İkisi
 
 ---
 
-## 1.1 Hocanın istediği (bizim anladığımız)
-
-Görüşmede söylenenler ve bunların teknik karşılığı:
+## 1.1 Hocanın istediği
 
 | Hocanın söylediği | Teknik anlamı | Projedeki karşılığı |
 |---|---|---|
-| "Hibrit RAG yapacaksınız" | İki farklı arama yöntemini birleştiren bir *Retrieval-Augmented Generation* sistemi | Sistemin tamamı |
-| "Korpusları araştıracaksınız" | Arama yapılacak belge koleksiyonlarını (veri setlerini) inceleyin | [Faz 1: Korpus araştırması](05-korpus-arastirmasi.md) |
-| "Açık kaynakları araştıracaksınız" | Hem **açık veri setleri** hem **açık kaynak araçlar/modeller** | Korpus raporu + [Teknolojiler](04-teknolojiler.md) |
-| "Ona göre sektör belirleyeceksiniz" | Sektörü, iyi veri bulunan alana göre seçin | Faz 1 sonundaki karar |
-| "Vektörel arama olacak" | Embedding modeliyle anlamsal arama (dense retrieval) | Faz 4 |
-| "Birleştireceğiz" | Kelime araması ile vektör aramasının sonuçlarını tek listede birleştirme (fusion) | Faz 5 |
-| "Farklı yöntemlerle birleştireceğiz" | Birden fazla fusion yöntemini deneyip **karşılaştırma** | [Birleştirme Yöntemleri](06-birlestirme-yontemleri.md) + [Değerlendirme](07-degerlendirme.md) |
-
-**Özet:** Hoca, çalışan bir sistemin yanında **bilimsel bir karşılaştırma** bekliyor: *"Bu sektörün verisinde hangi birleştirme yöntemi, hangi koşulda, ne kadar daha iyi?"*
+| "Hibrit RAG yapacaksınız" | Kelime araması ile vektör aramasını birlikte kullanan, bulduğu belgelere dayanarak cevap üreten sistem | Sistemin tamamı |
+| "Korpusları araştırın" | Arama yapılacak belge koleksiyonlarını inceleyin | Kullanma talimatları ([Korpus ve Veri](05-korpus-arastirmasi.md)) |
+| "Soru-cevap korpuslarını da araştırın" | Cevabı belli olan soru setleri: sistemi ölçmek için gerekli | Test seti ([Değerlendirme](07-degerlendirme.md)) |
+| "Vektörel arama olacak, birleştireceğiz" | Anlam araması + kelime araması, sonuçların tek listede birleştirilmesi | Hibrit arama ([Birleştirme Yöntemleri](06-birlestirme-yontemleri.md)) |
+| "Büyük veri setine gerek yok" | Az ama doğru etiketlenmiş veri yeterli | 200–300 soruluk test seti |
 
 ## 1.2 Bizim istediğimiz
 
-1. **Öğrenmek.** Kullandığımız her teknolojiyi ve mimariyi gerçekten anlamak.
-2. **Sahiplik.** Projenin kontrolü bizde olsun. Her modülü ikimiz de anlatabilelim, değiştirebilelim, savunabilelim.
-3. **Adım adım ilerlemek.** Proje "oldu bitti"ye gelmesin. Her katman bir öncekinin üstüne, anlaşılarak eklensin.
-4. **Kapsamlı ve piyasaya sürülebilir bir ürün.** Sonunda bir demo değil, gerçek kullanıcıya sunulabilecek bir sistem olsun.
+1. **Gerçekten işe yarayan bir ürün.** İnsanların gerçek bir sorununu çözsün.
+2. **Öğrenmek ve sahiplik.** Her parçayı ikimiz de anlatabilelim, değiştirebilelim, savunabilelim.
+3. **Adım adım ilerlemek.** Her aşamanın sonunda çalışan bir sistem olsun.
+4. **Görünürlük.** Açık veri seti, bildiri, yarışma ve canlı demo ile adımızı duyuralım.
 
-## 1.3 İkisini birleştiren proje tanımı
+## 1.3 Proje: Türkçe İlaç Asistanı
 
-> Seçilen bir sektöre ait **Türkçe açık korpus** üzerinde; **BM25** (seyrek/kelime tabanlı) ve **yoğun vektör** (anlamsal) aramayı ayrı ayrı kuran, bu iki aramanın sonuçlarını **en az 5 farklı birleştirme yöntemiyle** birleştirip **standart bilgi erişimi metrikleriyle** karşılaştıran, en iyi yapılandırmanın üstüne **yeniden sıralama (reranking)** ve **LLM ile kaynaklı cevap üretimi** ekleyen, **API + web arayüzü + Docker** ile canlıya alınabilir bir Hibrit RAG sistemi.
+**Sorun.** Kullanma talimatları uzun, yazıları küçük ve dili ağır; çoğu insan okumuyor. Ama soruları var: "Aç karnına mı içeceğim?", "Hamileyken kullanabilir miyim?", "Bir dozu unutursam ne yapayım?" Eczanenin kapalı olduğu saatlerde ya da birkaç ilaç kullanan yaşlı bir yakın için bu sorular daha da önemli.
 
-Bu tanımın iki yüzü var:
+**Çözüm.** Kullanıcı sorusunu doğal Türkçeyle yazar. Sistem resmî kullanma talimatında ilgili bölümü bulur, sade bir dille cevap verir ve **talimattaki kaynak paragrafı gösterir.** Talimatta yeterli bilgi yoksa **cevap uydurmaz**, "Bu bilgi talimatta bulunmuyor, eczacınıza danışın" der.
 
-| Akademik yüz (hocaya) | Ürün yüzü (piyasaya) |
+**Neden hibrit arama?** İlaç sorularında iki tür ihtiyaç var:
+
+| Soru | Kim yakalar? |
 |---|---|
-| Fusion yöntemlerinin karşılaştırmalı analizi | Sektör çalışanının belgelere doğal dille soru sorabildiği asistan |
-| Deney tasarımı, metrikler, anlamlılık testleri | Hızlı, güvenilir, kaynak gösteren cevaplar |
-| Türkçeye özgü ön işlemenin etkisi | KVKK uyumu, yerelde çalışabilme |
-| Özgün katkı: soruya göre değişen birleştirme | Kullanıcı yönetimi, izleme, ölçeklenebilirlik |
+| "Parol 500 mg günde kaç tane?" | **BM25:** ilaç adı ve doz gibi kesin terimler |
+| "Ateşim var, emziriyorum, ne içebilirim?" | **Vektör araması:** belgedeki kelimeler geçmiyor, anlam benziyor |
+
+İkisini birleştirmek iki tür soruda da doğru bölümü bulmayı sağlar.
+
+**Ne değildir?** Tıbbi tavsiye vermez, teşhis koymaz, doz önermez. Yalnızca resmî talimattaki bilgiyi kaynağıyla aktarır.
 
 ## 1.4 Araştırma soruları
 
-Raporun ve sunumun omurgası bu sorular olacak. Her deney en az birine cevap vermeli.
-
-- **AS1:** Seçilen Türkçe korpusta BM25 ve vektör araması ayrı ayrı ne kadar başarılı? Hangi soru tiplerinde hangisi daha iyi?
-- **AS2:** Hangi birleştirme yöntemi (RRF, ağırlıklı toplam, CombSUM, CombMNZ, ...) en yüksek başarıyı veriyor? Fark istatistiksel olarak anlamlı mı?
-- **AS3:** Türkçe ön işleme (küçük harfe çevirme, kök bulma) BM25'i ve hibrit sonucu ne kadar etkiliyor?
-- **AS4:** Yeniden sıralama (cross-encoder) hibrit aramanın üstüne ne kadar katkı sağlıyor? Bunun hız maliyeti ne?
-- **AS5 (özgün katkı):** Birleştirme ağırlığını soruya göre dinamik seçmek, sabit ağırlıktan daha mı iyi?
+- **AS1:** İlaç sorularında BM25, vektör araması ve hibrit arama ne kadar başarılı? Hangi soru tipinde hangisi daha iyi?
+- **AS2:** Hangi birleştirme yöntemi (RRF, doğrusal birleştirme) bu veride daha iyi çalışıyor?
+- **AS3:** Türkçe ön işleme (Türkçeye uygun küçük harf, kök bulma) BM25'i ne kadar etkiliyor?
+- **AS4:** Üretilen cevaplar ne kadar doğru, gösterilen kaynak cevabı gerçekten destekliyor mu?
+- **AS5:** Sistem, cevabı talimatta olmayan sorularda cevap vermemeyi ne kadar başarıyor? Gereksiz yere de "bilmiyorum" diyor mu?
 
 ## 1.5 Kapsam
 
-### Kapsamda
-- Bir sektör, bir ana korpus (gerekirse ikinci bir korpusla genelleme testi)
-- Türkçe belgeler ve sorular
-- BM25 + vektör araması + en az 5 fusion yöntemi + reranking
-- Kaynak gösteren LLM cevabı
-- Değerlendirme altyapısı (test seti, metrikler, deney kayıtları)
-- REST API, web arayüzü, Docker ile kurulum
-- Temel ürün özellikleri: kullanıcı girişi, belge yükleme, sorgu geçmişi, izleme
+**Kapsamda**
+- TİTCK'nın yayımladığı ilaç kullanma talimatları (KT); önce 5, sonra 50+ ilaç
+- BM25, vektör araması ve hibrit arama
+- 200–300 soruluk Türkçe ilaç sorusu test seti
+- Kaynak gösteren cevap üretimi ve "kanıt yetersiz" kontrolü
+- Streamlit ile çalışan prototip, sonra canlı demo
 
-### Şimdilik kapsam dışı (zaman kalırsa)
-- Çoklu dil desteği
-- Bilgi grafı (GraphRAG): Selim'in [arsiv-zekasi-graphrag](https://github.com/selimdogann/arsiv-zekasi-graphrag) projesinde zaten var, ileride üçüncü bir kaynak olarak eklenebilir
-- Kendi embedding modelimizi eğitmek (fine-tuning)
+**Şimdilik kapsam dışı**
+- İlaç etkileşimi analizi (iki ilacın birlikte kullanımı)
+- Kişisel sağlık verisi işleyen özellikler (kullanıcı hesabı, ilaç geçmişi)
 - Mobil uygulama
+- Kendi modelimizi eğitmek
 
 ## 1.6 Başarı ölçütleri
 
 | Alan | Ölçüt |
 |---|---|
-| **Akademik** | En az 5 fusion yöntemi aynı test setinde karşılaştırılmış, sonuçlar tablo ve grafikle raporlanmış, anlamlılık testi yapılmış |
-| **Teknik** | Hibrit arama, en iyi tekil yöntemden (BM25 ya da vektör) nDCG@10'da anlamlı biçimde daha iyi. Deneyler tek komutla tekrarlanabilir |
-| **Ürün** | `docker compose up` ile ayağa kalkıyor. Arama gecikmesi p95 < 1 sn (LLM hariç). Her cevapta kaynak var |
-| **Öğrenme** | Rastgele seçilen herhangi bir modülü ikimiz de 5 dakikada tahtada anlatabiliyoruz |
+| **Arama** | Hibrit arama, test setinde BM25'ten ve vektör aramasından daha yüksek Recall@5 alıyor |
+| **Cevap** | Cevapların büyük çoğunluğu doğru ve her cevabın kaynağı onu destekliyor |
+| **Güvenlik** | Cevabı talimatta olmayan soruların büyük çoğunluğunda sistem cevap vermiyor |
+| **Ürün** | Projeyi bilmeyen biri arayüzü yardımsız kullanabiliyor |
+| **Öğrenme** | Herhangi bir modülü ikimiz de 5 dakikada anlatabiliyoruz |
 
-## 1.7 Hocaya teyit ettirilecek sorular
+Sayısal hedefler ilk ölçümden sonra hocayla birlikte belirlenecek.
 
-Bir sonraki görüşmeden önce bu listeyi netleştirin. Cevapları buraya yazın.
+## 1.7 Hocaya sorulacaklar
 
-- [ ] Korpus **Türkçe** mi olmalı, İngilizce de kabul mü? → *Cevap:*
-- [ ] Ağırlık **karşılaştırmalı deney/analiz** mi, **çalışan uygulama** mı, yoksa ikisi eşit mi? → *Cevap:*
-- [ ] LLM **yerel/açık kaynak** mı olmalı, yoksa ticari API (ör. Claude, GPT) kullanmak serbest mi? → *Cevap:*
-- [ ] Sektör seçimi için **kaç korpus** incelenip raporlanmalı? → *Cevap:*
-- [ ] Hangi birleştirme yöntemlerini **mutlaka** görmek istiyor? (RRF ve ağırlıklı toplam yeterli mi?) → *Cevap:*
-- [ ] Ara rapor ve final **teslim tarihleri** ve **rapor formatı** ne? → *Cevap:*
-- [ ] Görüşme sıklığı ne olacak? (önerimiz: 2 haftada bir) → *Cevap:*
+- [ ] Konuyu ilaç kullanma talimatları üzerinde soru-cevap asistanı olarak daraltmak uygun mu? → *Cevap:*
+- [ ] "Birleştirme" ile en iyi çalışan yöntemi seçmek mi bekleniyor, yoksa yöntemleri ayrıntılı karşılaştırmak mı? → *Cevap:*
+- [ ] Projeyi TurkishMedLLM çalışmanızın arama tarafını hibrit aramayla geliştiren bir devam olarak kurabilir miyiz? Kullandığınız veriyi paylaşabilir misiniz? → *Cevap:*
+- [ ] Test setini kendimiz hazırlayacağız; kaç soru yeterli? → *Cevap:*
+- [ ] Sonuçları hangi konferansta bildiri olarak sunabiliriz? → *Cevap:*
+- [ ] Ara rapor ve final teslim tarihleri, rapor biçimi? → *Cevap:*
+- [ ] Kodun lisansı konusunda üniversitenin bir kuralı var mı? → *Cevap:*
 
-## 1.8 Riskler ve önlemler
+## 1.8 Bağlantılı çalışma
+
+Danışmanımızın ortak yazarı olduğu **TurkishMedLLM** ([Diagnostics, 2026](https://doi.org/10.3390/diagnostics16193142)) çalışması, 210.791 Türkçe tıbbi soru-cevap çifti ve 22.135 hastane makalesi üzerinde vektör tabanlı bir RAG sistemi kuruyor. Bizim projemiz, arama tarafına kelime aramasını ekleyip birleştirerek bu çizginin devamı olarak konumlanabilir. Diğer çalışmalar: [Kaynaklar](10-kaynaklar-ve-sozluk.md).
+
+## 1.9 Riskler
 
 | Risk | Olasılık | Önlem |
 |---|---|---|
-| Uygun Türkçe korpus bulunamaması | Orta | Faz 1'de en az 4 sektör incelenecek, yedek sektör belirlenecek |
-| Hazır test seti (soru-cevap etiketi) olmaması | Yüksek | Kendi test setimizi üreteceğiz (LLM ile taslak + elle doğrulama). Bkz. [Değerlendirme](07-degerlendirme.md) |
-| Donanım yetersizliği (embedding/LLM yavaş) | Orta | Toplu işler için Colab/Kaggle GPU. Küçük ve nicemlenmiş (quantized) modeller |
-| Kapsamın büyüyüp zamanın yetmemesi | Yüksek | Fazlar sırayla tamamlanacak, her fazın sonunda **çalışan** bir sistem olacak |
-| Kodun anlaşılmadan eklenmesi | Orta | PR kuralları ve anlat-öğret oturumları. Bkz. [Çalışma Düzeni](09-calisma-duzeni.md) |
-| Model lisanslarının ticari kullanıma izin vermemesi | Orta | Her modelin lisansı [Teknolojiler](04-teknolojiler.md) tablosunda takip edilecek |
+| TİTCK belgelerinin toplu kullanımına izin olmaması | Orta | Kullanım koşulları baştan kontrol edilecek; yedek: CC BY 4.0 lisanslı hastane makaleleri ([Korpus ve Veri](05-korpus-arastirmasi.md)) |
+| PDF'lerden düzgün metin çıkmaması | Orta | Önce 5 belgeyle denenecek, gerekirse farklı PDF aracı |
+| Yanlış cevabın zarar vermesi | Yüksek etki | Her cevapta kaynak paragraf, kanıt yoksa cevap vermeme, ekranda tıbbi tavsiye uyarısı |
+| Test sorusu hazırlamanın uzun sürmesi | Orta | Dil modeliyle taslak + elle kontrol, iş ikiye bölünecek |
+| Kapsamın büyümesi | Yüksek | Her aşamanın sonunda çalışan sistem; kapsam dışı listesi korunacak |
+| Kodun anlaşılmadan eklenmesi | Orta | PR kuralları ve anlat-öğret oturumları ([Çalışma Düzeni](09-calisma-duzeni.md)) |
