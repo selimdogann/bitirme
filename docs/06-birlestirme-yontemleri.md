@@ -1,14 +1,14 @@
 # 6. Birleştirme (Fusion) Yöntemleri
 
-Hocanın "farklı yöntemlerle birleştireceğiz" dediği kısım bu. Projenin **bilimsel çekirdeği** burası.
+Hocanın "birleştireceğiz" dediği kısım bu: BM25 ile vektör aramasının sonuçlarını tek listede birleştirmek. Amacımız bütün yöntemleri ayrıntılı karşılaştırmak değil; **bu veride iyi çalışan bir birleştirme seçip** ürünün arama motorunu sağlam kurmak. Seçimi ölçümle yapacağız.
 
-Bu doküman her yöntemi **formülü, örneği, artısı ve eksisiyle** anlatır. Yöntemler üç seviyeye ayrılmıştır:
+Bu doküman yöntemleri **formülü, örneği, artısı ve eksisiyle** anlatır. Projede ne zaman hangisine ihtiyaç olduğu:
 
-| Seviye | Yöntemler | Faz |
+| Öncelik | Yöntemler | Ne zaman |
 |---|---|---|
-| 🟢 **Temel** | RRF, Ağırlıklı RRF, Borda, Linear (min-max / z-score), CombSUM, CombMNZ, CombMAX | 5 |
-| 🟡 **Orta** | Cross-encoder reranking, DBSF, sorgu tipine göre yönlendirme | 6 |
-| 🔴 **İleri** | Dinamik α, Learning-to-Rank, LLM ile sıralama, öğrenilmiş seyrek arama | 6 + |
+| 🟢 **Kullanacağız** | RRF, doğrusal birleştirme (min-max) | Aşama 4 |
+| 🟡 **Gerekirse** | Ağırlıklı RRF, CombSUM, CombMNZ, cross-encoder ile yeniden sıralama | Aşama 7, arama yetersiz kalırsa |
+| 🔴 **İleri / isteğe bağlı** | Dinamik α, Learning-to-Rank, LLM ile sıralama | Zaman kalırsa, bildiri için |
 
 ---
 
@@ -158,7 +158,7 @@ Hibrit arama (ilk 50 aday)  →  Cross-encoder her (soru, aday) çiftini puanlar
 - Reranker varken fusion yöntemi hâlâ fark yaratıyor mu? **Bu çok iyi bir araştırma sorusu**
 
 ### DBSF (Distribution-Based Score Fusion)
-Normalizasyonu, puan dağılımının ortalama ± 3 standart sapma aralığına göre yapar. Uç değerlere Min-Max'ten daha dayanıklıdır. Qdrant'ta hazır bulunur. Biz kendimiz de yazabiliriz.
+Normalizasyonu, puan dağılımının ortalama ± 3 standart sapma aralığına göre yapar. Uç değerlere Min-Max'ten daha dayanıklıdır. Biz kendimiz de yazabiliriz.
 
 ### Sorgu Tipine Göre Yönlendirme (Query Routing)
 Basit kurallarla soru tipini belirleyip yöntemi ona göre seçmek:
@@ -204,30 +204,25 @@ Fusion değil, ama hibrit pipeline'ı güçlendirir:
 
 ## 6.6 Deney planı
 
-### Deney 1: Temel karşılaştırma (Faz 5)
+### Deney: Hangi birleştirme? (Aşama 4–5)
 | Değişken | Değerler |
 |---|---|
-| Arayıcılar | BM25, Dense (en iyi model) |
-| Fusion | RRF, wRRF, Borda, Linear(min-max), Linear(z-score), CombSUM, CombMNZ, CombMAX |
-| Her arayıcıdan alınan liste uzunluğu | 20, 50, 100, 200 |
-| RRF k | 1, 10, 30, 60, 100 |
-| Linear α | 0.0 → 1.0 (0.1 adımlarla) |
-| Metrikler | nDCG@10, Recall@10, Recall@50, MRR@10 |
+| Arama | BM25, vektör, hibrit |
+| Birleştirme | RRF, doğrusal (min-max) |
+| Her aramadan alınan liste uzunluğu | 20 |
+| RRF k | 10, 60 |
+| Doğrusal α | 0.0 → 1.0 (0.1 adımlarla) |
+| Metrikler | Recall@5, MRR@10, nDCG@10 |
 
 **Çıktılar:**
-- Ana sonuç tablosu (yöntem × metrik)
-- α eğrisi grafiği
-- RRF k duyarlılık grafiği
-- **Soru tipine göre kırılım:** Hangi yöntem kelime sorularında, hangisi anlam sorularında iyi?
+- Sonuç tablosu: BM25, vektör, RRF ve doğrusal birleştirme yan yana
+- α eğrisi: ağırlık BM25'ten vektöre kaydıkça başarı nasıl değişiyor?
+- **Soru tipine göre kırılım:** İlaç adı ve doz içeren sorularda hangisi, doğal dille sorulan sorularda hangisi iyi?
 
-### Deney 2: Reranking (Faz 6)
-En iyi 3 fusion yöntemi × reranker (var / yok) × aday sayısı (20 / 50 / 100)
-
-### Deney 3: Dinamik α (Faz 6)
-Sabit en iyi α ile dinamik α karşılaştırması. Eğitim ve test bölmesi **ayrı** olmalı (bkz. [Değerlendirme](07-degerlendirme.md)).
+En iyi sonucu veren yöntem ürünün varsayılan araması olur.
 
 ### Doğrulama
-Kendi yazdığımız fusion fonksiyonlarının sonuçlarını **ranx kütüphanesinin `fuse()` fonksiyonuyla karşılaştıracağız.** Aynı girdide aynı sonucu vermeliler. Bu kontrol `tests/` altında otomatik bir test olacak.
+Kendi yazdığımız RRF ve doğrusal birleştirmenin küçük bir örnekte elle hesaplanan sonuçla aynı çıktığını gösteren basit bir test yazacağız.
 
 ---
 
