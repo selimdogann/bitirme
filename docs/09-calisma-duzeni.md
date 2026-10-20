@@ -4,144 +4,177 @@
 
 ---
 
-## 9.1 Rol dağılımı: rotasyonlu sahiplik
+## 9.1 Rol dağılımı: dönüşümlü sahiplik
 
-Sabit roller yok ("sen backend, ben frontend" gibi). Ama her işin bir **sürücüsü** (driver) ve bir **gözden geçireni** (reviewer) var. Bu roller her fazda yer değiştirir.
+Sabit roller yok. Her işin bir **yapanı** ve bir **inceleyeni** var; benzer işlerde roller yer değiştirir.
 
-| Faz | Selim | Zehra | Not |
-|---|---|---|---|
-| 0: Hazırlık | Repo ayarları, CI | pyproject, pre-commit | Birlikte |
-| 1: Korpus | 3 sektör | 3 sektör | Karar birlikte |
-| 2: Veri hattı | Ayrıştırma, temizleme | Parçalama | Test seti: **ikisi birlikte** |
-| 3: BM25 | Metrikler + runner | Türkçe ön işleme + BM25 | |
-| 4: Vektör | Model karşılaştırma | Qdrant + Docker | |
-| 5: Fusion | Puan tabanlı (Linear, Comb*) | Sıra tabanlı (RRF, Borda) | Analiz birlikte |
-| 6: Rerank | Dinamik α | Reranker | |
-| 7: LLM | RAGAS değerlendirme | İstem + istemci | |
-| 8: API | Veritabanı | FastAPI uç noktaları | |
-| 9: Ürün | Backend: kimlik doğrulama, önbellek, izleme | Frontend | |
-| 10: Rapor | Bölümler eşit dağıtılır | | |
+| Aşama | Selim | Zehra |
+|---|---|---|
+| 0: Altyapı | Repo, CI, şablonlar | Ortamı kendi bilgisayarında kurup test etme |
+| 1: Veri | PDF'ten metin çıkarma | Bölümlere ve paragraflara ayırma |
+| 2: BM25 | Arayüze bağlama | Türkçe ön işleme ve BM25 |
+| 3: Vektör | Embedding ve arama | Arayüzde yan yana gösterim |
+| 4: Hibrit | Doğrusal birleştirme | RRF |
+| 5: Test seti | **İkisi birlikte**, yarı yarıya | |
+| 6: Cevap | Kanıt eşiği | İstem ve Ollama bağlantısı |
+| 7: Cevap ölçümü | Cevap vermeme ölçümü | Cevap ve kaynak doğruluğu |
+| 8: Ürün | Canlı demo | Arayüz sadeleştirme |
+| 9: Rapor | Bölümler eşit dağıtılır | |
 
-> Bu tablo bir öneridir. İlgi alanınıza göre değiştirin. Kural şu: **bir fazda bir kişinin yaptığını, bir sonraki benzer işte diğeri yapar.** Örnek: Faz 3'te Zehra arayıcı yazdıysa Faz 4'te arayıcıyı Selim yazar.
+> Bu tablo bir öneri. Kural şu: **bir aşamada birinin yaptığını, bir sonraki benzer işte diğeri yapar.**
 
 ## 9.2 Git akışı
 
 ```
-main  ─────●─────────────●─────────────●──────►   (her zaman çalışır, korumalı)
-            \           /  \           /
-feature/     ●──●──●───●    ●──●──●───●
-bm25-turkish   (Zehra)       fusion-rrf (Selim)
+main  ──●───────────────●───────────────●──────►   (korumalı, her zaman çalışır)
+         \             /  \             /
+          ●──●──●─────●    ●──●──●─────●
+          feat/bm25         feat/vektor-arama
 ```
 
-1. Her iş bir **GitHub Issue** ile başlar
-2. Issue'dan bir dal (branch) açılır: `feature/<kısa-ad>`, `fix/<kısa-ad>`, `exp/<deney-adı>`, `docs/<konu>`
-3. Küçük ve sık commit atılır
-4. İş bitince **Pull Request (PR)** açılır, açıklamada `Closes #12` yazılır
-5. **Diğer kişi** inceler ve onaylar. CI yeşil olmalı
-6. *Squash and merge* yapılır, dal silinir
+**`main` dalının kuralları** (GitHub'da ayarlı):
+- `main`'e doğrudan push **yasak**. Her değişiklik bir PR ile gelir.
+- PR'ın birleşebilmesi için **CI'ın (ruff) geçmesi** ve PR'daki yorumların çözülmesi gerekir.
+- Onay şartı yok. Ama birleştirmeden önce diğer kişinin PR'a bakması beklenir.
+- PR'lar **squash** ile birleşir: PR'daki bütün commit'ler `main`'e tek bir commit olarak girer.
+- Birleşen dal otomatik silinir.
 
-### Commit mesajları ([Conventional Commits](https://www.conventionalcommits.org/))
+### Dal adları
+
+| Önek | Ne için | Örnek |
+|---|---|---|
+| `feat/` | Yeni özellik | `feat/bm25` |
+| `fix/` | Hata düzeltme | `fix/turkce-kucuk-harf` |
+| `docs/` | Doküman | `docs/test-seti-kurallari` |
+| `chore/` | Ortam, ayar, araç | `chore/ruff-ayari` |
+| `exp/` | Deney | `exp/rrf-k-taramasi` |
+
+### Commit mesajları
+
+[Conventional Commits](https://www.conventionalcommits.org/) biçiminde, **Türkçe ve kısa**: bir başlık ve gerekiyorsa 1–2 cümlelik açıklama.
+
 ```
-feat(retrieval): BM25'e Türkçe kök bulma eklendi
-fix(fusion): min-max'te tek elemanlı listede sıfıra bölme hatası
-test(metrics): nDCG ranx ile karşılaştırma testi
-docs(korpus): GİB özelgeleri envantere eklendi
-exp(fusion): RRF k taraması sonuçları
-```
-
-### PR şablonu (`.github/pull_request_template.md`)
-```markdown
-## Ne yaptım?
-
-## Neden?
-
-## Nasıl test ettim?
-
-## Öğrendiklerim / Zorlandığım yer
-
-## Gözden geçirenin özellikle bakmasını istediğim yer
-
-## Yapay zekâ kullanımı
-- [ ] Kullanmadım
-- [ ] Kullandım: ... (neyi, nasıl) — ve kodun her satırını anlatabilirim
+feat: BM25 araması eklendi
+fix: Türkçe büyük İ harfinin küçültülmesi düzeltildi
+docs: test seti etiketleme kuralları yazıldı
+chore: sentence-transformers bağımlılığı eklendi
+test: RRF için elle hesaplanmış örnek testi eklendi
 ```
 
-## 9.3 Görev takibi
+| Tür | Ne zaman |
+|---|---|
+| `feat` | Yeni bir özellik |
+| `fix` | Hata düzeltme |
+| `docs` | Sadece doküman |
+| `chore` | Ortam, bağımlılık, ayar |
+| `ci` | GitHub Actions |
+| `test` | Test ekleme veya düzeltme |
+| `refactor` | Davranışı değiştirmeden kodu düzenleme |
 
-- **GitHub Projects** panosu: `Yapılacak → Yapılıyor → İncelemede → Bitti`
-- Her faz bir **Milestone**
-- Etiketler: `faz-3`, `deney`, `hata`, `dokümantasyon`, `öğrenme`
-- Bir issue en fazla 1–2 günlük iş olmalı. Büyükse bölün
+## 9.3 Bir işin baştan sona akışı
 
-## 9.4 Toplantı ritmi
+**1. Issue aç.** GitHub'da **Issues → New issue → Görev**. Ne yapılacağını ve "bitti sayılır" koşulunu yaz, etiket ve milestone seç.
+
+**2. Güncel `main`'den dal aç.**
+```bash
+git switch main
+git pull
+git switch -c feat/bm25
+```
+
+**3. Çalış, küçük ve sık commit at.**
+```bash
+git status                       # ne değişti?
+git add search.py                # commit'e girecek dosyayı seç
+git commit -m "feat: BM25 için ters indeks eklendi"
+```
+
+**4. Göndermeden önce kontrol et.**
+```bash
+uv run ruff check --fix .        # hataları bul, düzeltilebilenleri düzelt
+uv run ruff format .             # biçimi düzelt
+```
+
+**5. Dalı GitHub'a gönder ve PR aç.**
+```bash
+git push -u origin feat/bm25
+```
+GitHub sayfasında çıkan **"Compare & pull request"** düğmesine bas. Açıklamayı şablona göre doldur; issue'yu kapatmak için `Closes #12` yaz.
+
+**6. İnceleme.** Diğer kişi PR'daki değişiklikleri okur, anlamadığı satırı yorumla sorar. Yorumlar çözülür.
+
+**7. Birleştir.** CI yeşilse **"Squash and merge"**. Dal kendiliğinden silinir.
+
+**8. Yerelde temizle.**
+```bash
+git switch main
+git pull
+git branch -d feat/bm25
+```
+
+## 9.4 Görev takibi
+
+- **Issues:** Her iş bir issue. Bir issue en fazla 1–2 günlük iş olmalı; büyükse bölün.
+- **Etiketler:** `görev`, `hata`, `veri`, `arama`, `cevap`, `değerlendirme`, `arayüz`, `dokümantasyon`, `altyapı`, `öğrenme`
+- **Milestone:** Her aşama bir milestone ([Yol Haritası](08-yol-haritasi.md)).
+- **Proje panosu:** `Yapılacak → Yapılıyor → İncelemede → Bitti`
+
+## 9.5 Toplantı ritmi
 
 | Ne | Ne zaman | Süre | İçerik |
 |---|---|---|---|
-| **Kısa senkron** | Haftada 2–3 kez | 15 dk | Dün ne yaptım, bugün ne yapacağım, nerede takıldım |
-| **Haftalık plan** | Pazartesi | 30 dk | Panoyu gözden geçir, haftanın issue'larını paylaştır |
-| **Anlat-öğret** | Her faz sonunda | 1 saat | Her biriniz **diğerinin** yazdığı modülü tahtada anlatır. Anlatamadığınız yer varsa faz bitmemiştir |
-| **Hoca görüşmesi** | 2 haftada bir | 30 dk | Önceden 1 sayfalık ilerleme notu gönderin (`docs/toplantilar/`) |
+| **Kısa senkron** | Haftada 2–3 kez | 15 dk | Ne yaptım, ne yapacağım, nerede takıldım |
+| **Haftalık plan** | Pazartesi | 30 dk | Issue'ları gözden geçir, haftanın işlerini paylaş |
+| **Anlat-öğret** | Her aşama sonunda | 1 saat | Her biriniz **diğerinin** yazdığı kodu anlatır. Anlatamadığınız yer varsa aşama bitmemiştir |
+| **Hoca görüşmesi** | 2 haftada bir | 30 dk | Önceden 1 sayfalık ilerleme notu (`docs/toplantilar/`) |
 | **Birlikte kodlama** | Haftada 1 | 2 saat | Zor bir kısmı tek ekranda birlikte yazın |
 
-## 9.5 Sahiplik ve yapay zekâ kullanım kuralları
+## 9.6 Sahiplik ve yapay zekâ kuralları
 
-Projenin kontrolünün **sizde** kalması için bu kurallara uyun. Bu kurallar Claude dahil tüm yapay zekâ araçları için geçerli.
+Projenin kontrolü **sizde** kalsın diye bu kurallar Claude dahil bütün yapay zekâ araçları için geçerli.
 
 ### Yapay zekâyı şunlar için kullanın ✅
 - **Kavram öğrenmek:** "BM25'te b parametresi ne işe yarar, örnekle anlat"
-- **Takıldığınızda ipucu almak:** "Kodum şu hatayı veriyor, kök nedeni bulmama yardım et ama düzeltmeyi yazma"
-- **Kodunuzu inceletmek:** "Yazdığım RRF fonksiyonunda hata veya iyileştirme var mı?"
+- **Takıldığınızda ipucu almak:** "Kodum bu hatayı veriyor, nedenini bulmama yardım et"
+- **Kodunuzu inceletmek:** "Yazdığım RRF fonksiyonunda hata var mı?"
 - **Test fikri almak:** "Bu fonksiyon için hangi uç durumları test etmeliyim?"
-- **Sıkıcı ve öğretici olmayan kodu yazdırmak:** Proje iskeleti, yapılandırma dosyaları, grafik çizim kodu
+- **Öğretici olmayan işler:** proje iskeleti, ayar dosyaları, grafik kodu
 
 ### Şunlardan kaçının ❌
 - Bir modülün tamamını yazdırıp anlamadan commit etmek
-- Hata mesajını yapıştırıp çıkan düzeltmeyi neden işe yaradığını anlamadan uygulamak
-- Rapordaki analiz ve yorumları yazdırmak. Bunlar sizin düşünceniz olmalı
+- Çıkan düzeltmeyi neden işe yaradığını anlamadan uygulamak
+- Rapordaki analiz ve yorumları yazdırmak; bunlar sizin düşünceniz olmalı
 
 ### Altın kural
 > **"Bu satır ne yapıyor, neden böyle?" sorusuna cevap veremediğiniz kod `main`'e girmez.**
-> PR'ı inceleyen kişi bu soruyu rastgele bir satır için sorma hakkına sahip.
+> PR'ı inceleyen kişi bu soruyu rastgele bir satır için sorabilir.
 
-### Önerilen yöntem: önce siz, sonra yapay zekâ
-```
-1. Konuyu dokümandan oku
-2. Kendin yazmaya çalış (30–60 dk)
-3. Takılırsan yapay zekâdan İPUCU iste, çözüm değil
-4. Çalışan kodunu yapay zekâya inceletmek için ver
-5. Önerilerden anladıklarını uygula
-6. Öğrendiğini öğrenme günlüğüne yaz
-```
-
-## 9.6 Öğrenme günlüğü
+## 9.7 Öğrenme günlüğü
 
 Her biriniz `docs/gunluk/selim.md` ve `docs/gunluk/zehra.md` dosyalarında haftalık kısa notlar tutun:
 
 ```markdown
-## Hafta 5 (2026-11-09)
+## Hafta 3 (2026-11-02)
 **Öğrendim:** BM25'te uzunluk normalizasyonu neden gerekli...
 **Zorlandım:** Türkçe 'İ' harfinin küçültülmesi...
-**Sorularım:** Snowball mı Zeyrek mi daha iyi olur? → deneyle bakacağız
-**Kaynak:** ...
+**Sorularım:** Kök bulma ilaç adlarını bozar mı? → deneyle bakacağız
 ```
 
-**Neden?** (1) Raporu yazarken altın değerinde olur. (2) Savunmada "bu projede ne öğrendiniz?" sorusunun cevabını verir. (3) Öğrenmeyi kalıcı yapar.
+Raporu yazarken ve savunmada "ne öğrendiniz?" sorusunda çok işe yarar.
 
-## 9.7 "Bitti" tanımı (Definition of Done)
+## 9.8 "Bitti" tanımı
 
-Bir iş ancak şu koşullar sağlanınca bitti sayılır:
-- [ ] Kod çalışıyor ve testleri var (çekirdek modüller için)
-- [ ] `ruff` ve `pytest` CI'da yeşil
-- [ ] Diğer kişi PR'ı inceledi ve onayladı
+Bir iş ancak şu koşullar sağlanınca bitmiş sayılır:
+- [ ] Kod çalışıyor
+- [ ] CI yeşil
+- [ ] Diğer kişi PR'a baktı
 - [ ] Gerekiyorsa doküman güncellendi
-- [ ] Deneyse: sonuçlar `experiments/results/` altında, yorumu `experiments/notes/` altında
 - [ ] Yazan kişi kodu diğerine anlatabiliyor
 
-## 9.8 Kod standartları
+## 9.9 Kod standartları
 
-- **Tip ipuçları** (type hints) her fonksiyonda
-- **Docstring:** Herkese açık her fonksiyonda kısa açıklama. Türkçe olabilir
-- **İsimlendirme:** Kod İngilizce (`fuse`, `retriever`), dokümanlar ve yorumlar Türkçe
-- **Sihirli sayı yok:** `k=60` gibi değerler yapılandırmadan gelir
-- **Gizli bilgiler** (API anahtarı, şifre) asla repoya girmez, `.env` içinde tutulur
-- **Notebook'lar keşif içindir.** Kalıcı mantık `src/` altına taşınır
+- **Tip ipuçları** her fonksiyonda: `def search(query: str, k: int) -> list[dict]:`
+- **Docstring:** Her fonksiyonda kısa açıklama; Türkçe olabilir
+- **İsimlendirme:** Kod İngilizce (`search`, `chunk`), doküman ve yorumlar Türkçe
+- **Sihirli sayı yok:** `k=60` gibi değerler dosyanın başında adlandırılmış sabit olur
+- **Gizli bilgiler** (şifre, API anahtarı) asla repoya girmez, `.env` dosyasında tutulur

@@ -1,222 +1,153 @@
 # 8. Yol Haritası
 
-Proje 11 faza bölündü. Her fazın **öğrenme hedefleri, görevleri, teslimi ve bitti sayılma koşulu** var.
+Proje 10 aşamaya bölündü. Her aşamanın **görevleri, teslimi ve "bitti sayılır" koşulu** var.
 
 **Kurallar:**
-- Bir faz bitmeden sonrakine geçilmez. Bitti sayılma koşulu karşılanmalı.
-- Her fazın sonunda sistem **çalışır durumda** olmalı.
-- Her fazın sonunda **anlat-öğret oturumu** yapılır: her biriniz o fazda diğerinin yazdığı kısmı anlatır.
-- Süreler tahminidir. Bölümün bitirme takvimine (ara rapor, final teslim) göre uyarlayın.
+- Bir aşamanın "bitti sayılır" koşulu karşılanmadan sonrakine geçilmez.
+- Her aşamanın sonunda sistem **çalışır durumda** olur.
+- Her aşamanın sonunda **anlat-öğret oturumu** yapılır: her biriniz diğerinin yazdığı kısmı anlatır.
+- Her aşama GitHub'da bir **milestone**, her görev bir **issue** olur ([Çalışma Düzeni](09-calisma-duzeni.md)).
+- Süreler tahminidir; bölümün teslim tarihleri öğrenilince güncellenecek.
 
 ```
-Ekim          Kasım          Aralık         Ocak           Şubat          Mart           Nisan          Mayıs
-│ F0 │── F1 ──│── F2 ──│─ F3 ─│── F4 ──│─ F5 ─│(sınav)│── F6 ──│─ F7 ─│──── F8 ────│──── F9 ────│─ F10 ─│
- hazır  korpus   veri+    BM25   vektör  fusion          rerank   LLM    API+arayüz    ürün        rapor
-                 test                    ▲                 +dinamik α                               ▲
-                                    ara rapor?                                                    final
+Ekim      Kasım             Aralık            Ocak              Şubat         Mart          Nisan         Mayıs
+│ A0 │──── A1 ────│── A2 ──│── A3 ──│── A4 ──│── A5 ──│ (sınav) │── A6 ──│── A7 ──│──── A8 ────│── A9 ──│
+ altyapı  veri      BM25     vektör   hibrit   test seti          cevap     cevap      ürün        rapor
+                                               + ölçüm  ▲                  ölçümü                    ▲
+                                                    ara rapor                                      final
 ```
 
 ---
 
-## Faz 0: Hazırlık (1 hafta)
+## Aşama 0: Altyapı
 
-**Öğrenme hedefleri:** Git ve GitHub ile birlikte çalışmak, Python proje yapısı, uv, kod stili araçları.
+**Öğrenme hedefleri:** uv, Git/GitHub, dal-commit-PR akışı.
 
-**Görevler:**
-- [ ] Zehra'yı repoya *collaborator* olarak ekle
-- [ ] İkiniz de repoyu klonlayın, `uv` kurun
-- [ ] `pyproject.toml`, `.gitignore`, `.env.example`, `src/hybridrag/__init__.py` oluşturun
-- [ ] `ruff` ve `pre-commit` kurun
-- [ ] GitHub'da **Project (Kanban) panosu** açın, fazları *milestone* olarak ekleyin
-- [ ] `main` dalını koruma altına alın (PR'sız doğrudan push yasak)
-- [ ] [Temel Kavramlar](02-temel-kavramlar.md) dokümanını okuyun, "Kendinizi test edin" sorularını birbirinize sorun
-- [ ] Hocayla görüşüp [Proje Tanımı → teyit soruları](01-proje-tanimi.md#17-hocaya-teyit-ettirilecek-sorular) bölümünü cevaplayın
+- [x] Repo, uv ve Python 3.12 ortamı
+- [x] Boş Streamlit arayüzü
+- [x] ruff ve her PR'da çalışan CI
+- [x] PR ve issue şablonları, `main` dal koruması
+- [ ] Zehra repoyu klonlayıp `uv sync` ve `uv run streamlit run app.py` çalıştırıyor
+- [ ] Hocayla görüşme: [teyit soruları](01-proje-tanimi.md#17-hocaya-sorulacaklar)
 
-**Teslim:** Boş ama düzgün kurulmuş bir proje iskeleti. İkinizin de açtığı ve birbirinizin onayladığı en az bir PR.
-**Bitti sayılır:** İkiniz de kendi bilgisayarınızda `uv run python -c "import hybridrag"` komutunu çalıştırabiliyorsunuz.
+**Bitti sayılır:** İkiniz de kendi bilgisayarınızda uygulamayı açabiliyor ve en az birer PR açıp birleştirdiniz.
 
 ---
 
-## Faz 1: Korpus araştırması ve sektör seçimi (2–3 hafta)
+## Aşama 1: Veri (kullanma talimatlarından parçalara)
 
-**Öğrenme hedefleri:** Açık veri kaynakları, veri lisansları, korpus özelliklerinin hibrit aramaya etkisi.
+**Öğrenme hedefleri:** PDF'ten metin çıkarma, metin temizleme, parçalama.
 
-**Görevler:** [Korpus Araştırması](05-korpus-arastirmasi.md) dokümanındaki süreç.
-- [ ] En az 6 sektör için kaynak envanteri
-- [ ] En iyi 3 aday için örneklem indirme ve 20'şer örnek soru
-- [ ] Puanlama matrisi
-- [ ] Korpus raporu ve hoca onayı
+- [ ] 5 ilacın kullanma talimatını TİTCK'dan indirmek ([Korpus ve Veri](05-korpus-arastirmasi.md))
+- [ ] PDF'ten metin çıkarmak, Türkçe karakterleri kontrol etmek
+- [ ] Metni talimatın bölüm başlıklarına ve paragraflara ayırmak
+- [ ] `data/processed/chunks.jsonl` üretmek ([Mimari §3.3](03-mimari.md#33-veri-biçimi-chunksjsonl))
+- [ ] TİTCK kullanım koşullarını kontrol etmek
 
-**Teslim:** `docs/korpus-raporu.md`
-**Bitti sayılır:** Sektör ve yedek sektör hocayla onaylandı.
-
----
-
-## Faz 2: Veri hattı ve test seti (3 hafta)
-
-**Öğrenme hedefleri:** Web'den veri toplama, HTML/PDF ayrıştırma, metin temizleme, parçalama stratejileri, test seti tasarımı.
-
-**Görevler:**
-- [ ] `scripts/download.py`: kaynaktan veri indirme (hız sınırlamalı, kaldığı yerden devam edebilen)
-- [ ] `ingestion/parsers.py`: HTML/PDF'ten metin ve yapı (başlık, madde) çıkarma
-- [ ] `ingestion/cleaning.py`: Unicode normalizasyonu, gürültü temizliği
-- [ ] `ingestion/chunking.py`: **en az 2 strateji** (sabit boyut + yapısal)
-- [ ] Çıktı biçimi: `data/processed/chunks.jsonl`
-- [ ] Korpus istatistikleri notebook'u (belge sayısı, uzunluk dağılımı, kelime frekansları)
-- [ ] **Paralel iş:** Test setinin ilk 100 sorusu ve etiketleme kılavuzu ([Değerlendirme §7.1](07-degerlendirme.md#71-test-seti))
-
-**Teslim:** Temiz korpus + korpus istatistikleri + 100 soruluk test seti v0.
-**Bitti sayılır:** Tek komutla (`uv run python scripts/build_corpus.py`) sıfırdan korpus üretilebiliyor.
+**Teslim:** `ingest.py`
+**Bitti sayılır:** `uv run python ingest.py` komutu 5 PDF'ten `chunks.jsonl` üretiyor ve her parçanın ilacı, bölümü ve sayfası doğru.
 
 ---
 
-## Faz 3: Kelime tabanlı arama, BM25 (2 hafta)
+## Aşama 2: BM25
 
-**Öğrenme hedefleri:** Ters indeks, TF-IDF, BM25 matematiği, Türkçe ön işleme, birim testi, metrik hesaplama.
+**Öğrenme hedefleri:** Ters indeks, TF-IDF, BM25, Türkçe ön işleme.
 
-**Görevler:**
-- [ ] `text/turkish.py`: Türkçe küçük harf, normalizasyon, stopword listesi, kök bulma (Snowball). **Birim testleriyle**
-- [ ] `retrieval/bm25.py`: **Önce sıfırdan kendi BM25'imiz**, sonra `bm25s` ile hızlı sürüm
-- [ ] İki sürümün aynı sonucu verdiğini gösteren test
-- [ ] `evaluation/metrics.py`: Recall, MRR, nDCG. Kendi yazdığımız sürüm `ranx` ile karşılaştırılarak test edilecek
-- [ ] `evaluation/runner.py`: YAML yapılandırmasından deney çalıştırma (ilk sürüm)
-- [ ] **Deney:** Ön işleme yok / küçük harf / + stopword / + Snowball / + Zeyrek → BM25 sonuçları (AS3)
-- [ ] **Deney:** k1 ve b parametre taraması
-- [ ] GitHub Actions: her PR'da `pytest` + `ruff`
+- [ ] Türkçeye uygun küçük harfe çevirme ve kelimelere bölme
+- [ ] BM25'i sıfırdan yazmak ([Temel Kavramlar §2.5](02-temel-kavramlar.md))
+- [ ] Sonucu `bm25s` kütüphanesiyle karşılaştırmak
+- [ ] Streamlit'te soru kutusuna göre ilk 5 paragrafı göstermek
 
-**Teslim:** BM25 arayıcı + ilk deney sonuçları tablosu.
-**Bitti sayılır:** `uv run python -m hybridrag.evaluation.runner experiments/configs/bm25.yaml` çalışıyor ve metrikleri yazdırıyor.
+**Teslim:** `search.py` içinde BM25
+**Bitti sayılır:** Arayüzde "Parol hamilelik" yazınca ilgili paragraf ilk sonuçlarda çıkıyor.
 
 ---
 
-## Faz 4: Vektörel arama (2–3 hafta)
+## Aşama 3: Vektör araması
 
-**Öğrenme hedefleri:** Embedding, kosinüs benzerliği, bi-encoder, ANN/HNSW, Docker, vektör veritabanı.
+**Öğrenme hedefleri:** Embedding, kosinüs benzerliği.
 
-**Görevler:**
-- [ ] `retrieval/dense.py`: önce **NumPy ile brute force** arama
-- [ ] 4–5 embedding modelini test setinde karşılaştırma (başarı + hız + lisans). Bkz. [Teknolojiler §4.2](04-teknolojiler.md#modeller-adaylar-ölçerek-seçilecek)
-- [ ] Büyük korpus için embedding'i Colab/Kaggle GPU'da üretme betiği
-- [ ] `docker-compose.yml`: Qdrant servisi
-- [ ] Qdrant'a geçiş. Brute force ile Qdrant'ın sonuçlarını ve hızlarını karşılaştırma (ANN ne kadar doğruluk kaybettiriyor?)
-- [ ] **Deney:** Parçalama stratejisi × embedding modeli
+- [ ] Paragrafları bir embedding modeliyle vektöre çevirmek ve kaydetmek
+- [ ] NumPy ile benzerlik araması
+- [ ] Arayüzde BM25 ve vektör sonuçlarını yan yana göstermek
 
-**Teslim:** Dense arayıcı + model karşılaştırma tablosu + seçilen model ve gerekçesi.
-**Bitti sayılır:** BM25 ve dense, aynı runner ile aynı test setinde ölçülebiliyor.
+**Bitti sayılır:** "Emzirirken içebilir miyim?" gibi talimattaki kelimeleri içermeyen sorularda vektör araması doğru paragrafı buluyor.
 
 ---
 
-## Faz 5: Hibrit birleştirme v1 (2–3 hafta) ⭐ projenin kalbi
+## Aşama 4: Hibrit arama
 
-**Öğrenme hedefleri:** Sıra ve puan tabanlı fusion, normalizasyon, deney tasarımı, istatistiksel anlamlılık, deney takibi.
+**Öğrenme hedefleri:** RRF, doğrusal birleştirme, puan normalizasyonu ([Birleştirme Yöntemleri](06-birlestirme-yontemleri.md)).
 
-**Görevler:** [Birleştirme Yöntemleri](06-birlestirme-yontemleri.md)
-- [ ] `fusion/base.py` arayüzü
-- [ ] `fusion/rrf.py`, `fusion/linear.py`, `fusion/comb.py`, `fusion/normalization.py`
-- [ ] Her yöntem için `ranx.fuse` ile karşılaştırma testi
-- [ ] `pipeline.py`: `HybridPipeline` (BM25 ve dense paralel çalışır)
-- [ ] MLflow ile deney takibi
-- [ ] Test setini 200+ soruya çıkarma ve havuzlama (pooling) ile eksik etiketleri tamamlama
-- [ ] **Deney 1** ([§6.6](06-birlestirme-yontemleri.md#66-deney-planı)): tüm yöntemler, α eğrisi, k duyarlılığı, soru tipine göre kırılım, anlamlılık testleri
-- [ ] Hata analizi notları
-- [ ] Streamlit ile basit demo: soru gir, BM25 / dense / hibrit sonuçlarını yan yana gör
+- [ ] RRF
+- [ ] Doğrusal birleştirme (min-max)
+- [ ] Arayüzde üç yöntemin sonuçlarını yan yana göstermek
 
-**Teslim:** Ana sonuç tablosu + grafikler + demo. **Ara rapor/sunum için ideal nokta.**
-**Bitti sayılır:** AS1 ve AS2'ye verilerle cevap verebiliyorsunuz.
+**Bitti sayılır:** Arayüzde BM25, vektör ve hibrit sonuçlarını karşılaştırabiliyorsunuz. Bu, **arama prototipinin (v0)** tamamlanması demek.
 
 ---
 
-## Faz 6: Reranking ve gelişmiş birleştirme (3 hafta)
+## Aşama 5: Test seti ve ölçüm
 
-**Öğrenme hedefleri:** Cross-encoder, iki aşamalı arama, öznitelik mühendisliği, basit makine öğrenmesi modeli eğitme.
+**Öğrenme hedefleri:** Test seti tasarımı, Recall, MRR, nDCG.
 
-**Görevler:**
-- [ ] `rerank/cross_encoder.py`
-- [ ] **Deney 2:** fusion × reranker × aday sayısı (AS4)
-- [ ] DBSF ve sorgu tipine göre yönlendirme
-- [ ] **Dinamik α** (AS5): öznitelik çıkarma → en iyi α'yı tahmin eden model → dev bölümünde eğitim, test bölümünde ölçüm
-- [ ] (İsteğe bağlı) BGE-M3 sparse ile üçüncü arayıcı
-- [ ] (İsteğe bağlı) Multi-query / HyDE
+- [ ] Talimatları 50+ ilaca çıkarmak
+- [ ] 200–300 soruluk test seti ve etiketleme kuralları ([Değerlendirme §7.1](07-degerlendirme.md#71-test-seti))
+- [ ] `evaluate.py`: arama metrikleri
+- [ ] Sonuç tablosu ve soru tipine göre kırılım
 
-**Teslim:** Gelişmiş sonuç tablosu + özgün katkı analizi.
-**Bitti sayılır:** AS4 ve AS5 cevaplandı.
+**Teslim:** İlk sonuç tablosu. **Ara rapor ve sunum için ideal nokta.**
+**Bitti sayılır:** "Hibrit arama, BM25'e göre Recall@5'te şu kadar daha iyi" diyebiliyorsunuz.
 
 ---
 
-## Faz 7: Cevap üretimi, LLM (2 hafta)
+## Aşama 6: Cevap üretimi
 
-**Öğrenme hedefleri:** Yerel LLM çalıştırma, istem mühendisliği, kaynak gösterme, halüsinasyonu ölçme.
+**Öğrenme hedefleri:** Yerel dil modeli, istem yazma, kanıt kontrolü.
 
-**Görevler:**
-- [ ] Ollama kurulumu, 2–3 Türkçe yetenekli modeli deneme
-- [ ] `generation/llm_client.py`: OpenAI uyumlu tek arayüz
-- [ ] `generation/prompts.py`: kaynak gösteren ve gerektiğinde reddeden istem şablonu
-- [ ] Akış (streaming) desteği
-- [ ] RAGAS + elle değerlendirme ([§7.3](07-degerlendirme.md#73-cevap-generation-metrikleri-faz-7))
-- [ ] **Deney:** Arama kalitesi (BM25 / dense / hibrit / hibrit+rerank) cevap kalitesini nasıl etkiliyor?
-- [ ] (İsteğe bağlı) Aynı pipeline'ı LlamaIndex ile kurup karşılaştırma
+- [ ] Ollama ile 2 Türkçe yetenekli modeli denemek
+- [ ] `answer.py`: yalnızca verilen paragraflara dayanan, kaynak gösteren istem
+- [ ] Kanıt eşiği: yeterli kanıt yoksa "bilgi yok" ([Mimari §3.5](03-mimari.md#35-cevap-verme-kuralı))
+- [ ] Arayüzde cevap ve altında kaynak paragraf
 
-**Teslim:** Uçtan uca RAG: soru → kaynaklı cevap.
-**Bitti sayılır:** Streamlit demosunda kaynaklı cevap görünüyor.
+**Bitti sayılır:** Arayüzde soru sorunca kaynaklı cevap geliyor; cevabı olmayan soruda sistem cevap vermiyor.
 
 ---
 
-## Faz 8: API ve uygulama (3 hafta)
+## Aşama 7: Cevap değerlendirmesi
 
-**Öğrenme hedefleri:** REST API tasarımı, async programlama, ilişkisel veritabanı, konteynerleştirme.
+- [ ] 50 cevaplık örneklemde cevap ve kaynak doğruluğu ([Değerlendirme §7.3](07-degerlendirme.md#73-cevap-metrikleri-aşama-7))
+- [ ] Cevap vermeme ölçümü ve eşik seçimi ([§7.4](07-degerlendirme.md#74-cevap-vermeme-ölçümü))
+- [ ] MedTurkQuAD ile ikinci kontrol
+- [ ] Gerekirse cross-encoder ile yeniden sıralama
 
-**Görevler:**
-- [ ] `api/`: FastAPI. Uç noktalar: `POST /search`, `POST /ask` (akışlı), `GET /documents/{id}`, `POST /feedback`, `GET /health`
-- [ ] Pydantic şemaları, hata yönetimi, girdi doğrulama
-- [ ] PostgreSQL + SQLAlchemy + Alembic: belgeler, sorgu kayıtları, geri bildirimler
-- [ ] Yeni belge yükleme → arka planda indeksleme
-- [ ] API için entegrasyon testleri
-- [ ] `docker-compose.yml`: api + qdrant + postgres + ollama
-- [ ] Streamlit'i API'ye bağlama
-
-**Teslim:** `docker compose up` ile çalışan uygulama + Swagger dokümantasyonu.
-**Bitti sayılır:** Temiz bir bilgisayarda README'deki adımlarla 15 dakikada kurulabiliyor.
+**Bitti sayılır:** AS4 ve AS5'e ([Proje Tanımı §1.4](01-proje-tanimi.md#14-araştırma-soruları)) verilerle cevap verebiliyorsunuz.
 
 ---
 
-## Faz 9: Ürünleştirme (3–4 hafta)
+## Aşama 8: Ürünleştirme
 
-**Öğrenme hedefleri:** Modern frontend, kimlik doğrulama, önbellek, gözlemlenebilirlik, CI/CD, güvenlik, canlıya alma.
+- [ ] Arayüzü sadeleştirmek: yaşlı bir kullanıcının da kullanabileceği kadar
+- [ ] Daha fazla ilaç
+- [ ] Canlı demo adresi
+- [ ] Projeyi bilmeyen 3–5 kişiyle kullanılabilirlik denemesi
 
-**Görevler:**
-- [ ] `frontend/`: Next.js + TypeScript + Tailwind
-  - Soru-cevap ekranı (akışlı cevap, tıklanabilir kaynaklar, kaynağın belgede vurgulanması)
-  - Belge kütüphanesi ve yükleme
-  - Geri bildirim (👍/👎 + yorum)
-  - Yönetici paneli: sorgu istatistikleri, gecikme, en çok sorulanlar
-- [ ] Kimlik doğrulama (JWT) ve rol tabanlı yetki (kullanıcı / yönetici)
-- [ ] Redis ile önbellek
-- [ ] Langfuse ile LLM izleme
-- [ ] **Güvenlik:** istem enjeksiyonu (prompt injection) testleri, hız sınırlama, KVKK uyumu (kişisel veri maskeleme, kayıtların saklama süresi)
-- [ ] CI/CD: test → Docker imajı → sunucuya dağıtım
-- [ ] Yük testi (ör. `locust`): eşzamanlı 20 kullanıcıda p95 gecikmesi
-- [ ] Canlı ortam: bir sunucuda (VPS) demo adresi
-
-**Teslim:** Canlı demo adresi + ürün dokümantasyonu.
-**Bitti sayılır:** Projeyi hiç görmemiş bir arkadaşınız arayüzü yardımsız kullanabiliyor.
+**Bitti sayılır:** Projeyi hiç görmemiş biri arayüzü yardımsız kullanabiliyor.
 
 ---
 
-## Faz 10: Rapor, sunum ve savunma (2–3 hafta)
+## Aşama 9: Rapor, sunum ve görünürlük
 
-**Görevler:**
-- [ ] Bitirme raporu: giriş, literatür, yöntem, deneyler, sonuçlar, tartışma, sonuç. `experiments/notes/` ve sonuç tabloları burada kullanılır
-- [ ] Sunum ve canlı demo senaryosu (internet kesilirse diye video yedeği)
-- [ ] Repo temizliği: README, kurulum, lisans, ekran görüntüleri
-- [ ] **Savunma provası:** Birbirinize jüri gibi soru sorun. Herhangi bir modülü ikiniz de anlatabilmelisiniz
-- [ ] (İsteğe bağlı) Sonuçları bir konferans bildirisine (ör. ASYU, SIU, UBMK) ya da arXiv'e dönüştürme
+- [ ] Bitirme raporu ve sunum (internet kesilirse diye demo videosu)
+- [ ] Test setini Hugging Face'te yayınlamak (lisans hocayla netleştirilerek)
+- [ ] Hocayla bildiri ([Proje Tanımı §1.7](01-proje-tanimi.md#17-hocaya-sorulacaklar))
+- [ ] Savunma provası: birbirinize jüri gibi soru sorun
 
 ---
 
-## Zaman kalırsa (Faz 11+)
+## Zaman kalırsa
 
-- GraphRAG ile üçüncü bir kaynak (Selim'in [arsiv-zekasi-graphrag](https://github.com/selimdogann/arsiv-zekasi-graphrag) deneyimi)
-- Embedding modelini kendi korpusumuza göre ince ayarlama (fine-tuning)
-- Kullanıcı geri bildirimleriyle Learning-to-Rank
-- Çoklu kiracı (multi-tenant): her müşteriye ayrı belge alanı
-- İkinci sektöre genişleme: genelleme testi
+- Dinamik α: birleştirme ağırlığını her soruya göre seçmek
+- Danışmanımızın TurkishMedLLM sistemine hibrit arama modülü olarak entegrasyon
+- İlaç kutusundaki karekodu okutunca talimatın açılması
+- İki ilacın birlikte kullanımı hakkındaki soruları cevaplama

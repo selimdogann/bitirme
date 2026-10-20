@@ -1,157 +1,58 @@
-# 5. Korpus Araştırması ve Sektör Seçimi
+# 5. Korpus ve Veri
 
-Hocanın ilk istediği iş bu: **açık korpusları araştırın, sektörü ona göre seçin.** Bu doküman bu araştırmanın nasıl yapılacağını, nereye bakılacağını ve kararın nasıl verileceğini anlatır.
+Bu doküman sistemin **hangi belgelerde arama yapacağını**, **test sorularının nereden geleceğini** ve **verinin hukuki açıdan nasıl kullanılacağını** anlatır.
 
-> **Altın kural:** Sektörü veriye göre seçiyoruz, veriyi sektöre göre aramıyoruz. "Sağlık çok havalı" diye başlayıp sonra veri bulamamak, bitirme projelerinin en sık yaşadığı sorundur.
+> **Korpus:** Sistemin içinde arama yaptığı belge koleksiyonu. **Soru-cevap korpusu:** Her sorunun doğru cevabının bilindiği set; sistemi ölçmek için kullanılır.
 
 ---
 
-## 5.1 Hibrit RAG için iyi bir korpus nasıl olur?
+## 5.1 Karar: TİTCK kullanma talimatları
 
-| Özellik | Neden önemli | İdeal |
-|---|---|---|
-| **Erişilebilir** | Veriyi gerçekten indirebilmeliyiz | Toplu indirme, API ya da düzenli yapıda bir web sitesi |
-| **Lisansı uygun** | Hem akademik hem ticari kullanım için | Kamu malı, açık lisans (CC-BY gibi) |
-| **Yeterli hacim** | Arama farklarının ortaya çıkması için | 5.000+ belge ya da 50.000+ parça |
-| **Türkçe ve kaliteli** | Projenin Türkçe odağı | OCR hatası az, düzgün metin |
-| **Terim ve kod yoğun** | BM25'in parlayacağı sorgular olsun | Madde no, kanun no, ürün kodu, özel isimler |
-| **Doğal dil soruları sorulabilir** | Vektör aramanın parlayacağı sorgular olsun | Halkın gerçekten sorduğu sorular |
-| **Yapılı** | Parçalamayı kolaylaştırır | Madde, başlık, bölüm sınırları belli |
-| **Gerçek kullanıcı ihtiyacı** | Ürün yüzü için | Bu belgelerde bilgi arayan birileri var |
-| **Test seti üretilebilir** | Değerlendirme için | Hazır SSS ya da soru-cevap var, ya da soru yazmak kolay |
+Sistemin arayacağı belgeler, Türkiye İlaç ve Tıbbi Cihaz Kurumu'nun (TİTCK) yayımladığı **ilaç kullanma talimatları (KT)**.
 
-**Kilit nokta:** Hibrit aramanın değerini göstermek için korpusta **hem kelime eşleşmesi gerektiren hem anlam gerektiren** sorular olmalı. Yalnızca birinin kazandığı bir korpusta birleştirme deneyleri sıkıcı ve anlamsız olur.
-
-## 5.2 Aday sektörler ve kaynaklar
-
-Aşağıdakiler **araştırma başlangıç noktalarıdır**. Her birinin erişim yöntemini, kullanım koşullarını ve hacmini **sizin kontrol etmeniz** gerekiyor. Bulduklarınızı Bölüm 5.4'teki tabloya işleyin.
-
-### A. Hukuk ve mevzuat
-| Kaynak | İçerik |
+| Özellik | Neden önemli |
 |---|---|
-| mevzuat.gov.tr | Kanun, yönetmelik, tüzük, genelge |
-| Resmî Gazete (resmigazete.gov.tr) | Günlük yayımlanan mevzuat |
-| Yargıtay karar arama | Yargıtay kararları |
-| Anayasa Mahkemesi kararlar bilgi bankası | AYM kararları |
-| Danıştay kararları | İdari yargı kararları |
+| **Resmî ve güncel** | Kaynak gösterdiğimiz bilgi güvenilir olmalı |
+| **Türkçe ve hasta için yazılmış** | Kullanıcımız hasta; kutunun içinden çıkan metin |
+| **Aynı başlıklarla yazılmış** | "Nedir ve ne için kullanılır", "Kullanmadan önce dikkat edilmesi gerekenler", "Nasıl kullanılır", "Olası yan etkiler", "Saklanması". Parçalamayı ve kaynağı göstermeyi kolaylaştırır |
+| **Hibrite uygun** | Hem kesin terimler (ilaç adı, etkin madde, doz) hem de doğal dille sorulan sorular var |
 
-- **Artısı:** Çok büyük hacim, yapılı (madde madde), terim yoğun ("4857 s. K. m.17"), gerçek ihtiyaç var (avukatlar, vatandaşlar, İK). Kanun, yönetmelik ve mahkeme kararları FSEK m.31 kapsamında genel olarak telif korumasına tabi değildir. Yine de sitelerin kullanım koşullarını ayrıca kontrol edin.
-- **Eksisi:** Hukuki RAG çalışması çok sayıda var. Özgünlük için alt alan seçmek gerekebilir (ör. sadece iş hukuku). Selim'in GraphRAG projesi de hukuk/arşiv odaklı.
+**KT ve KÜB farkı:**
+- **KT (Kullanma Talimatı):** Hasta için. Kullanacağımız belge bu.
+- **KÜB (Kısa Ürün Bilgisi):** Doktor ve eczacı için teknik belge. Şimdilik kullanmıyoruz.
 
-### B. Vergi ve mali mevzuat
-| Kaynak | İçerik |
-|---|---|
-| Gelir İdaresi Başkanlığı (gib.gov.tr) | Kanunlar, tebliğler, sirküler, **özelgeler** (mükellef sorusuna verilen resmi cevaplar) |
-| Hazine ve Maliye Bakanlığı | Mevzuat ve duyurular |
+**Nereden alınır:** [TİTCK KÜB / KT Sorgulama Portalı](https://www.titck.gov.tr/kubkt). İlaç adı, etkin madde ya da firma adıyla aranır; "Kt Dokümanı" sütunundan PDF indirilir.
 
-- **Artısı:** Özelgeler hazır **soru-cevap yapısında**: "Mükellef şunu sordu, idare şunu cevapladı." Bu yapı test seti için altın değerinde. Çok terim ve kod içeriyor (KDV, GVK m.94, tevkifat oranları). Muhasebeci ve KOBİ'ler gibi gerçek bir pazar var.
-- **Eksisi:** Mevzuat sık değişiyor, güncellik takibi gerekiyor.
+**Plan:**
+1. Önce 5 ilaç elle indirilir: Parol, Arveles, Augmentin, Coraspin, Majezik.
+2. Metin çıkarma ve parçalama bu 5 belgeyle denenir.
+3. Sonra 50+ ilaca çıkılır. Toplu indirme yapılacaksa önce sitenin kullanım koşulları kontrol edilir.
 
-### C. Finans ve şirket bilgileri
-| Kaynak | İçerik |
-|---|---|
-| KAP (kap.org.tr) | Borsa şirketlerinin özel durum açıklamaları, finansal raporlar |
-| TCMB | Para politikası metinleri, Finansal İstikrar Raporu |
-| SPK, BDDK | Bültenler, düzenlemeler |
+## 5.2 Test için soru-cevap veri setleri
 
-- **Artısı:** Şirket adı, tutar ve tarih gibi kesin bilgiler içeren bol veri. Yatırımcı ve analist pazarı var.
-- **Eksisi:** Tablolar ve sayılar ağırlıklı, PDF ayrıştırması zor. KAP verisinin kullanım koşulları kontrol edilmeli.
+Hazır bir "Türkçe ilaç talimatı + soru" seti bulunamadı. Bu yüzden ana test setini kendimiz hazırlayacağız ([Değerlendirme](07-degerlendirme.md)). Araştırmada bulunan hazır setler ikinci kontrol ve karşılaştırma için kullanılacak.
 
-### D. Sağlık ve ilaç
-| Kaynak | İçerik |
-|---|---|
-| TİTCK | İlaç Kısa Ürün Bilgileri (KÜB) ve Kullanma Talimatları (KT) |
-| Sağlık Bakanlığı | Klinik rehberler, halk sağlığı dokümanları |
-
-- **Artısı:** Etken madde ve ilaç adları gibi kesin terimlerin yanında "baş ağrısına iyi gelen ilaçlar yan etki" gibi doğal dil soruları var. Hibrit için mükemmel.
-- **Eksisi:** **Yüksek risk alanı.** Yanlış cevap zarar verebilir. Ürün olarak sunmak hukuki sorumluluk getirir. PDF'ler dağınık.
-
-### E. Eğitim ve üniversite mevzuatı
-| Kaynak | İçerik |
-|---|---|
-| Üniversitelerin mevzuat sayfaları | Yönetmelik, yönerge, senato kararları |
-| YÖK mevzuatı | Yükseköğretim yönetmelikleri |
-| ÖSYM kılavuzları | Sınav ve yerleştirme kuralları |
-
-- **Artısı:** Öğrenci olarak alanı biliyorsunuz ve test sorusu yazmak kolay ("Kaç dersten kalınca uzarım?"). Kendi üniversiteniz için ürün demo'su etkileyici olur.
-- **Eksisi:** Tek üniversitenin hacmi küçük. Hacmi büyütmek için çok üniversiteyi kapsamak gerekir.
-
-### F. Hazır Türkçe veri setleri (yardımcı / test amaçlı)
-| Kaynak | Kullanım |
-|---|---|
-| Hugging Face Datasets | "turkish" + "retrieval", "question-answering", "legal", "news" ile arayın |
-| TQuAD, XQuAD (Türkçe bölümü) | Türkçe soru-cevap setleri. Yöntemi genel bir sette doğrulamak için |
-| BEIR (İngilizce) | Bilgi erişiminde standart test seti. Kodumuzu doğrulamak için: "BM25'imiz BEIR'deki bilinen sonuçlara yakın mı?" |
-
-> **İpucu:** Hazır bir İngilizce benchmark (ör. BEIR'den küçük bir set: SciFact, NFCorpus) üzerinde kodumuzu doğrulamak, **"kodumuz doğru çalışıyor mu?"** sorusunu cevaplar. Literatürdeki sonuçlara yakın sonuç alırsak kendi Türkçe korpusumuzdaki sonuçlara da güvenebiliriz.
-
-## 5.3 Araştırma süreci (Faz 1, 2–3 hafta)
-
-```
-Hafta 1 · Geniş tarama
-  ├─ Her biriniz 3 sektöre bakar (toplam 6)
-  ├─ Her kaynak için: URL, içerik türü, tahmini hacim, format, erişim yolu, lisans
-  └─ Hafta sonu: kaynak listesi tablosu (Bölüm 5.4)
-
-Hafta 2 · Derin inceleme (en iyi 3 aday)
-  ├─ Her adaydan ~100 belge indirin (küçük bir örneklem)
-  ├─ Metin kalitesine bakın: OCR hatası, tablo, gürültü
-  ├─ Her aday için 20 örnek soru yazın:
-  │     10 "kelime" sorusu   ör. "GVK 94. madde tevkifat oranları"
-  │     10 "anlam" sorusu    ör. "serbest meslek kazancında kesinti ne kadar?"
-  ├─ Örneklem üzerinde hızlı BM25 + vektör denemesi (notebook)
-  └─ Puanlama tablosunu doldurun (Bölüm 5.5)
-
-Hafta 3 · Karar
-  ├─ Korpus raporu (docs/korpus-raporu.md)
-  ├─ Hocayla görüşme ve onay
-  └─ Seçilen + yedek sektör
-```
-
-## 5.4 Kaynak envanteri şablonu
-
-İncelediğiniz her kaynağı bu tabloya ekleyin. Tabloyu `docs/korpus-raporu.md` dosyasında tutun.
-
-| # | Sektör | Kaynak | URL | Format | Tahmini hacim | Erişim | Lisans/koşul | Kalite (1–5) | İnceleyen | Not |
-|---|---|---|---|---|---|---|---|---|---|---|
-| 1 | Vergi | GİB Özelgeler | ... | HTML | ? belge | Web, sayfalı | Kamu | ? | Zehra | |
-| 2 | ... | | | | | | | | | |
-
-## 5.5 Puanlama matrisi
-
-Her kriteri 1–5 arası puanlayın, ağırlıkla çarpıp toplayın. Ağırlıklar önerimizdir. Hocayla birlikte değiştirebilirsiniz.
-
-| Kriter | Ağırlık | Sektör A | Sektör B | Sektör C |
+| Veri seti | Boyut | Paragraf var mı? | Lisans | Projedeki rolü |
 |---|---|---|---|---|
-| Erişilebilirlik ve indirme kolaylığı | 3 | | | |
-| Lisans uygunluğu (akademik + ticari) | 3 | | | |
-| Hacim | 2 | | | |
-| Metin kalitesi | 2 | | | |
-| Hibrite uygunluk (hem terim hem doğal dil) | **4** | | | |
-| Test seti üretme kolaylığı | **4** | | | |
-| Pazar ve gerçek ihtiyaç | 3 | | | |
-| Özgünlük (literatürde az çalışılmış mı?) | 2 | | | |
-| Risk (düşük risk = yüksek puan) | 2 | | | |
-| Ekibin alana ilgisi | 1 | | | |
-| **Toplam (ağırlıklı)** | | | | |
+| [MedTurkQuAD](https://huggingface.co/datasets/incidelen/MedTurkQuAD) | 8.200 tıbbi soru (test bölümü 820) | Evet | CC BY-NC-ND 4.0, ticari kullanım yasak | Yöntemin genel sağlık metinlerinde de çalıştığını göstermek |
+| [NFCorpus-TR](https://huggingface.co/datasets/trmteb/nfcorpus-tr) | 3.630 belge, 3.240 soru, hazır etiketler | Evet | Belirtilmemiş | Türkçeye çevrilmiş tıbbi arama testi |
+| [TurkishRAGEval](https://huggingface.co/datasets/mteb/turkish-rag-eval) | 58 soru, 54 sağlık makalesi | Evet | CC BY-SA 4.0 | Yayımlanmış referans sonuçlarla karşılaştırma |
+| [turkish-drug-interaction-qa](https://huggingface.co/datasets/magahcicek/turkish-drug-interaction-qa) | 260 ilaç etkileşimi sorusu | Hayır | Belirtilmemiş | Soru tarzı için örnek |
 
-## 5.6 Hukuki ve etik kontrol listesi
+Bütün setlerin ayrıntılı listesi ve değerlendirmesi ekip içinde paylaşılan araştırma raporunda: [Türkçe Soru-Cevap Veri Setleri Araştırması](https://claude.ai/code/artifact/a1f020b5-6ba7-4c82-a349-a1b3791bd07c) (erişim izni gerekir).
 
-- [ ] Sitenin kullanım koşulları otomatik veri toplamaya izin veriyor mu?
-- [ ] `robots.txt` hangi yolları yasaklıyor?
-- [ ] İstek hızını sınırlıyor muyuz? (ör. saniyede en fazla 1 istek, gece saatlerinde)
-- [ ] Veride **kişisel veri** var mı (isim, TCKN, adres)? Varsa KVKK gereği maskelenmeli. Mahkeme kararlarında taraf isimleri bu kapsama girer
-- [ ] Verinin kendisini repoda paylaşmıyoruz. Sadece **indirme betiğini** paylaşıyoruz
-- [ ] Kaynak ve atıf bilgisi her belgenin meta verisinde tutuluyor
+**Paragraf neden önemli?** Arama sistemini ölçmek için her sorunun cevabının **hangi belgede** olduğunu bilmemiz gerekiyor. Sadece soru ve cevap içeren setlerle arama ölçülemez.
 
-## 5.7 Korpus raporunun içeriği (Faz 1 teslimi)
+## 5.3 Yedek korpus
 
-`docs/korpus-raporu.md` dosyası şu bölümleri içerecek:
+TİTCK belgeleri kullanılamazsa: [Türk hastane makaleleri](https://huggingface.co/datasets/alibayram/turkish-hospital-medical-articles). 14 hastaneden 24.612 sağlık makalesi, CC BY 4.0 lisanslı. Bu durumda proje "ilaç" yerine "genel sağlık bilgisi" asistanına döner; mimari değişmez.
 
-1. İncelenen sektörler ve kaynaklar (envanter tablosu)
-2. Her aday için örnek belgeler ve örnek sorular
-3. Örneklem deneyinin sonuçları (BM25 ve vektör, kaba ölçüm)
-4. Puanlama matrisi
-5. **Karar:** Seçilen sektör ve gerekçesi, yedek sektör
-6. Veri toplama planı: nasıl indirilecek, ne kadar sürer, nasıl güncellenecek
-7. Riskler
+## 5.4 Hukuki ve etik kontrol listesi
+
+- [ ] TİTCK sitesinin kullanım koşulları belgelerin indirilip kullanılmasına izin veriyor mu?
+- [ ] Toplu indirme yapılacaksa hız sınırına uyuluyor mu? (ör. saniyede en fazla 1 istek)
+- [ ] PDF'ler repoda paylaşılmıyor (`data/raw/` git'e girmez); sadece nasıl indirileceği yazılıyor
+- [ ] Her parçanın hangi PDF'ten ve hangi sayfadan geldiği kayıtlı
+- [ ] Kullanılan her veri setinin lisansı yazılı ve ürüne konacaksa ticari kullanıma izin veriyor
+- [ ] Hasta–doktor soruları gibi kişisel sağlık verisi içerebilecek setler kullanılırsa KVKK'ya uygun şekilde, kimlik bilgilerinden arındırılarak kullanılıyor
+- [ ] Arayüzde "tıbbi tavsiye değildir" uyarısı var

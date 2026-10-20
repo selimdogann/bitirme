@@ -1,218 +1,174 @@
 # 7. Değerlendirme
 
-"Hibrit arama daha iyi" demek yetmez. **Ne kadar daha iyi, hangi koşulda, bu fark tesadüf mü?** Bu soruların cevabı ölçümle verilir. Bu doküman ölçüm altyapısını anlatır.
+"Sistem iyi çalışıyor" demek yetmez. **Ne kadar iyi, hangi soruda, ne zaman yanılıyor?** Bu soruların cevabı ölçümle verilir.
 
-> Değerlendirme altyapısı **Faz 2'de**, arama kodundan **önce** kurulmaya başlanır. Ölçemediğiniz bir şeyi geliştiremezsiniz.
+Üç şeyi ölçeceğiz:
+1. **Arama:** Doğru paragrafı buluyor mu?
+2. **Cevap:** Yazdığı cevap doğru mu, kaynağı cevabı destekliyor mu?
+3. **Cevap vermeme:** Cevabı talimatta olmayan soruda susmayı biliyor mu?
 
 ---
 
 ## 7.1 Test seti
 
-### Bileşenler
+### Dosyalar
+
 ```
 data/testset/
-├── queries.jsonl      # sorular
-├── qrels.tsv          # her soru için ilgili parçalar ve ilgililik derecesi
-└── README.md          # test setinin nasıl üretildiği
+├── queries.jsonl   # sorular
+├── qrels.tsv       # her sorunun doğru paragrafları
+└── README.md       # test setinin nasıl hazırlandığı ve etiketleme kuralları
 ```
 
 **queries.jsonl**
 ```json
-{"qid": "q001", "text": "Serbest meslek kazancında stopaj oranı nedir?", "type": "semantic", "split": "test"}
-{"qid": "q002", "text": "GVK 94. madde 2/b bendi", "type": "keyword", "split": "dev"}
+{"qid": "q001", "text": "Parol'ü aç karnına içebilir miyim?", "ilac": "Parol", "tip": "anlam", "bolum": "dev"}
+{"qid": "q002", "text": "Arveles 25 mg günde en fazla kaç tablet?", "ilac": "Arveles", "tip": "kelime", "bolum": "test"}
+{"qid": "q003", "text": "Coraspin'i kahveyle içmek sorun olur mu?", "ilac": "Coraspin", "tip": "cevapsiz", "bolum": "test"}
 ```
 
-**qrels.tsv** (TREC formatı: `qid  0  chunk_id  derece`)
+**qrels.tsv** (`soru  paragraf  derece`)
 ```
-q001  0  gvk-m94-p3    2
-q001  0  ozelge-1123   1
-q002  0  gvk-m94-p3    2
+q001  parol-3-002    2
+q002  arveles-3-001  2
 ```
+
+Cevabı talimatta olmayan sorular (`cevapsiz`) qrels'e yazılmaz.
 
 **İlgililik dereceleri:**
 | Derece | Anlamı |
 |---|---|
-| 2 | Soruyu doğrudan ve tam cevaplıyor |
-| 1 | Kısmen ilgili, yardımcı bilgi içeriyor |
-| 0 | İlgisiz (dosyaya yazılmasına gerek yok) |
+| 2 | Paragraf soruyu doğrudan ve tam cevaplıyor |
+| 1 | Kısmen ilgili, yardımcı bilgi var |
 
 ### Soru tipleri
-Sonuçları tipe göre kırarak analiz edebilmek için her sorunun tipi etiketlenir:
 
-| Tip | Açıklama | Örnek | Beklenti |
+| Tip | Açıklama | Örnek | Kim güçlü? |
 |---|---|---|---|
-| `keyword` | Kesin terim, kod, numara içerir | "4857 sayılı kanun 17. madde" | BM25 güçlü |
-| `semantic` | Doğal dil, belgedekinden farklı kelimeler | "İşten atılırsam kaç gün önceden haber verilmeli?" | Vektör güçlü |
-| `mixed` | İkisi birden | "4857'ye göre ihbar süreleri ne kadar?" | Hibrit güçlü |
-| `unanswerable` | Korpusta cevabı yok | "Almanya'da kıdem tazminatı nasıl hesaplanır?" | Sistem "bilmiyorum" demeli |
+| `kelime` | İlaç adı, doz, etkin madde gibi kesin terim içerir | "Augmentin 1000 mg kaç saatte bir?" | BM25 |
+| `anlam` | Doğal dil, talimattaki kelimeler geçmiyor | "Emzirirken bu ilacı içebilir miyim?" | Vektör |
+| `karma` | İkisi birden | "Majezik hamilelikte kullanılır mı?" | Hibrit |
+| `cevapsiz` | Cevabı talimatta yok | "Parol'ün fiyatı ne kadar?" | Sistem cevap vermemeli |
 
-**Hedef dağılım:** ~%30 keyword, ~%30 semantic, ~%30 mixed, ~%10 unanswerable.
+**Hedef dağılım:** yaklaşık %30 kelime, %30 anlam, %25 karma, %15 cevapsız.
 
-### Boyut
-- **En az 200, ideali 300+ soru.** Daha azında yöntemler arasındaki fark istatistiksel olarak anlamlı çıkmayabilir.
-- **Bölme:** %30 `dev` (parametre ayarı: α, k ...), %70 `test` (sadece final raporu için).
+### Boyut ve bölme
+- **200–300 soru.** Hocanın da belirttiği gibi büyük veri setine gerek yok; yöntemler arasındaki farkı görmek için bu boyut yeterli.
+- **Bölme:** %30 `dev` (eşik ve α ayarlamak için), %70 `test` (yalnızca sonuçları raporlamak için).
 
-> ⚠ **Altın kural:** Parametreleri `test` bölümüne bakarak ayarlamak **hile** sayılır (veri sızıntısı). Ayarlar `dev` bölümünde yapılır, `test` bölümüne en son ve bir kez bakılır.
+> ⚠ **Altın kural:** Ayarlar `dev` sorularında yapılır. `test` sorularına en son ve bir kez bakılır. Aksi halde sonuçlar gerçeği yansıtmaz.
 
-### Üretim yöntemi
+### Hazırlama yöntemi
 
 ```
 1. Elle yazma (~100 soru)
-   Belgeleri okuyup gerçek bir kullanıcının soracağı soruları yazın.
-   Gerçek kaynaklardan esinlenin: SSS sayfaları, forumlar, özelge soruları.
+   Talimatları okuyup gerçek bir hastanın soracağı soruları yazın.
+   Her soru için cevabın geçtiği paragrafı işaretleyin.
 
-2. LLM destekli taslak (~200+ soru)
-   Rastgele seçilen bir parçayı LLM'e verin: "Bu metnin cevapladığı, ama metindeki
-   kelimeleri birebir kullanmayan bir soru yaz." İlgili parça otomatik olarak etiketlenmiş olur.
-   ⚠ Her soruyu elle kontrol edin. Kötü soruları atın, düzeltin.
+2. Dil modeliyle taslak (~150 soru)
+   Rastgele bir paragrafı modele verin: "Bu paragrafın cevapladığı, ama paragraftaki
+   kelimeleri birebir kullanmayan bir hasta sorusu yaz."
+   ⚠ Her soruyu elle kontrol edin; kötüleri atın ya da düzeltin.
 
-3. Havuzlama (pooling), eksik etiketleri tamamlamak için
-   Bir sorunun cevabı başka parçalarda da olabilir. Etiketlenmemiş doğru parçalar
-   sistemi haksız yere cezalandırır. Bu yüzden:
-   - Tüm sistemlerin (BM25, dense, hibrit) ilk 10 sonucunu birleştirin
-   - Daha önce etiketlenmemiş olanları elle değerlendirin (0/1/2)
-   TREC'in standart yöntemi budur.
+3. Cevapsız sorular (~40 soru)
+   Talimatta cevabı olmayan ama makul sorular: fiyat, başka ilaçla karşılaştırma,
+   talimatta geçmeyen bir durum.
+
+4. Eksik etiketleri tamamlama
+   Bir sorunun cevabı başka paragraflarda da olabilir. Bütün yöntemlerin ilk 5 sonucunu
+   birleştirip etiketlenmemiş olanlara elle bakın.
 ```
 
-### Etiketleyiciler arası uyum
-Etiketleme özneldir. Güvenilirliği ölçmek için:
-- 50 soruluk ortak bir alt kümeyi **Selim ve Zehra ayrı ayrı** etiketlesin
-- **Cohen's Kappa** hesaplayın (> 0.6 iyi, > 0.8 çok iyi)
-- Anlaşmazlıkları tartışıp bir **etiketleme kılavuzu** yazın (`data/testset/README.md`)
+### İki kişinin etiketlerinin uyumu
+- 30 soruluk ortak bir kümeyi Selim ve Zehra **ayrı ayrı** etiketlesin.
+- Ne kadar aynı etiketi verdiğinizi hesaplayın (Cohen's Kappa; 0,6 üstü iyi).
+- Anlaşamadığınız yerleri konuşup etiketleme kurallarını `data/testset/README.md`'ye yazın.
 
-Bu adım raporda test setinin güvenilirliğini kanıtlar.
+Bu adım, raporda test setinin güvenilir olduğunu gösterir.
 
 ---
 
 ## 7.2 Arama metrikleri
 
-`rel(i)` = i. sıradaki belgenin ilgililik derecesi, `R` = sorunun tüm ilgili belgeleri.
-
-| Metrik | Formül | Sorduğu soru |
+| Metrik | Sorduğu soru | Neden önemli? |
 |---|---|---|
-| **Precision@k** | `|ilgili ∩ ilk k| / k` | İlk k sonucun yüzde kaçı ilgili? |
-| **Recall@k** | `|ilgili ∩ ilk k| / |R|` | İlgili belgelerin yüzde kaçını ilk k'da bulduk? |
-| **Hit@k** | İlk k'da en az 1 ilgili varsa 1, yoksa 0 | En az bir doğru belge bulabildik mi? |
-| **MRR@k** | `1 / ilk ilgili belgenin sırası` (sorular üzerinden ortalama) | İlk doğru cevap ne kadar yukarıda? |
-| **nDCG@k** | `DCG@k / IDCG@k` | Doğru belgeler, derecelerine göre ne kadar iyi sıralanmış? |
+| **Recall@5** | Doğru paragraf ilk 5 sonuçta var mı? | Dil modeline ilk 5 paragraf verilecek; doğru paragraf orada yoksa cevap da yanlış olur |
+| **MRR@10** | İlk doğru paragraf kaçıncı sırada? | Kullanıcıya gösterilen kaynağın kalitesi |
+| **nDCG@10** | Doğru paragraflar, derecelerine göre ne kadar üstte? | Literatürde standart; karşılaştırma için |
 
-**nDCG ayrıntısı:**
+**Örnek:**
 ```
-           k   2^rel(i) − 1
-DCG@k  =   Σ   ─────────────
-          i=1   log₂(i + 1)
-
-IDCG@k = mükemmel sıralamanın DCG'si    →    nDCG ∈ [0, 1]
+Soru 1: doğru paragraf 1. sırada   →  Recall@5 = 1,  MRR = 1/1 = 1.00
+Soru 2: doğru paragraf 4. sırada   →  Recall@5 = 1,  MRR = 1/4 = 0.25
+Soru 3: ilk 10'da yok              →  Recall@5 = 0,  MRR = 0
+                                       ─────────────────────────────
+                         Ortalama  →  Recall@5 = 0.67,  MRR = 0.42
 ```
-Derece 2 olan belge, derece 1 olandan daha değerlidir. Üst sıralar alt sıralardan daha değerlidir.
 
-**Hangi metrik ne için?**
-- **Recall@50 / Recall@100:** Reranker'a giden aday havuzunun kalitesi. Doğru belge havuzda yoksa reranker onu kurtaramaz
-- **nDCG@10:** Ana karşılaştırma metriği (literatür standardı)
-- **MRR@10:** Kullanıcı deneyimi. İlk doğru cevabı ne kadar hızlı görüyor?
-- **Recall@5:** LLM'e verilen bağlamın kalitesi
+Sonuçlar her zaman **soru tipine göre ayrı** da raporlanır. Asıl ilginç bulgu oradadır.
 
-> Metrikleri önce `src/hybridrag/evaluation/metrics.py` içinde **kendiniz yazın**, sonra `ranx` ile aynı sonucu verdiğini test edin.
+> Metrikleri önce `evaluate.py` içinde kendimiz yazacağız. Sonra küçük bir örnekte elle hesapladığımız sonuçla karşılaştıracağız.
 
 ---
 
-## 7.3 Cevap (generation) metrikleri (Faz 7)
+## 7.3 Cevap metrikleri (Aşama 7)
 
 | Metrik | Ölçtüğü | Nasıl |
 |---|---|---|
-| **Sadakat (Faithfulness)** | Cevaptaki iddialar verilen bağlamda var mı? (halüsinasyon) | RAGAS (LLM ile) |
-| **Cevap ilgililiği** | Cevap soruya gerçekten cevap veriyor mu? | RAGAS |
-| **Kaynak doğruluğu** | `[1]` etiketi gerçekten o iddiayı içeren parçayı mı gösteriyor? | Elle kontrol + otomatik eşleştirme |
-| **Reddetme doğruluğu** | `unanswerable` sorularda "bilmiyorum" diyor mu? | Otomatik |
-| **İnsan değerlendirmesi** | 50 cevaba 1–5 puan (doğruluk, tamlık, akıcılık) | Selim + Zehra + mümkünse bir alan uzmanı |
+| **Cevap doğruluğu** | Cevap talimattaki bilgiyle uyumlu mu? | Her cevap elle: doğru / kısmen / yanlış |
+| **Kaynak doğruluğu** | Gösterilen paragraf cevabı gerçekten destekliyor mu? | Elle kontrol |
+| **Sadelik** | Cevap anlaşılır mı? | Projeyi bilmeyen 3–5 kişiye okutma |
 
-> LLM ile yapılan değerlendirme (LLM-as-a-judge) de hata yapabilir. 30–50 örnekte insan puanıyla karşılaştırıp ne kadar güvenilir olduğunu raporlayın.
+Elle değerlendirme için 50 cevaplık bir örneklem yeterli.
 
 ---
 
-## 7.4 Sistem metrikleri
+## 7.4 Cevap vermeme ölçümü
 
-| Metrik | Neden |
-|---|---|
-| Gecikme p50 / p95 (her aşama için ayrı) | Kullanıcı deneyimi |
-| İndeksleme süresi (parça/saniye) | Ölçeklenebilirlik |
-| İndeks boyutu (MB) ve bellek kullanımı | Maliyet |
-| LLM token sayısı (soru başına) | Maliyet |
+Sistem iki şekilde yanılabilir:
 
-Raporda bunları **"başarı ve maliyet"** grafiğinde birlikte gösterin. Örnek: reranker nDCG'yi %8 artırıyor ama gecikmeyi 400 ms artırıyor.
+| | Talimatta cevap **var** | Talimatta cevap **yok** |
+|---|---|---|
+| **Sistem cevap verdi** | ✅ Doğru davranış | ❌ **Uydurma riski** (en tehlikelisi) |
+| **Sistem "bilgi yok" dedi** | ⚠ Gereksiz susma | ✅ Doğru davranış |
 
----
+İki sayı raporlanır:
+- **Doğru susma oranı:** `cevapsiz` soruların yüzde kaçında sistem "bilgi yok" dedi? Yüksek olmalı.
+- **Gereksiz susma oranı:** Cevabı olan soruların yüzde kaçında "bilgi yok" dedi? Düşük olmalı.
 
-## 7.5 İstatistiksel anlamlılık
-
-İki yöntem arasında 0.012'lik bir nDCG farkı gerçek bir fark mı, yoksa şans mı?
-
-- **Eşleştirilmiş test:** İki yöntem de aynı sorularda ölçüldüğü için *paired t-test* ya da daha sağlam olan **randomization (permutation) test** kullanılır.
-- **Çoklu karşılaştırma düzeltmesi:** 8 yöntemi karşılaştırırsak şans eseri "anlamlı" çıkma olasılığı artar. **Holm** ya da **Bonferroni** düzeltmesi uygulanır.
-- **Raporlama:** Tabloda anlamlı farklar † ya da * ile işaretlenir. `p < 0.05` eşiği kullanılır.
-
-`ranx`'in `compare()` fonksiyonu bu testleri hazır yapar. Önce mantığını anlayın, sonra kullanın.
+İkisi arasında denge var: eşik yükseldikçe sistem daha çok susar. Eşiği `dev` sorularında farklı değerlerle deneyip bu iki oranın grafiğini çizeceğiz ve dengeli noktayı seçeceğiz.
 
 ---
 
-## 7.6 Deney protokolü
+## 7.5 İkinci kontrol: Hazır veri setleri
 
-### Yapılandırma dosyası
-Her deney bir YAML dosyasıdır. Kod değişmez, sadece yapılandırma değişir.
+Kendi test setimizin yanında, yöntemin başka sağlık metinlerinde de çalıştığını göstermek için:
+- **MedTurkQuAD**'ın 820 soruluk test bölümü
+- **TurkishRAGEval**: yayımlanmış referans sonuçlarla karşılaştırma
 
-```yaml
-# experiments/configs/fusion_rrf_k60.yaml
-name: fusion_rrf_k60
-corpus: data/processed/chunks.jsonl
-testset:
-  queries: data/testset/queries.jsonl
-  qrels: data/testset/qrels.tsv
-  split: dev
-retrievers:
-  - type: bm25
-    k: 100
-    params: {k1: 1.2, b: 0.75}
-    preprocessing: {lowercase: turkish, stemmer: snowball, stopwords: true}
-  - type: dense
-    k: 100
-    model: BAAI/bge-m3
-fusion:
-  type: rrf
-  params: {k: 60}
-rerank: null
-metrics: [ndcg@10, recall@10, recall@50, mrr@10]
-```
+Ayrıntılar: [Korpus ve Veri](05-korpus-arastirmasi.md).
 
-### Her deneyde kaydedilecekler
-- Yapılandırmanın tamamı
-- Git commit kimliği (hangi kodla çalıştı?)
-- Korpus ve test seti sürümü (dosyaların checksum değeri)
-- Soru bazında sonuçlar (*run* dosyası, TREC formatı). Anlamlılık testi ve hata analizi için şart
+---
+
+## 7.6 Her ölçümde kaydedilecekler
+
+- Hangi yöntem, hangi ayarlar (k, α, eşik, model adı)
+- Kodun git commit kimliği
+- Soru bazında sonuçlar (hata analizi için şart)
 - Toplam metrikler
-- Süre ve donanım bilgisi
 
-### Hata analizi
-Sadece ortalama metriklere bakmak yetmez. Her deneyden sonra:
-1. Hibritin **en çok kazandırdığı** 10 soruyu inceleyin. Neden kazandı?
-2. Hibritin **en çok kaybettirdiği** 10 soruyu inceleyin. Neden kaybetti?
-3. Bulguları `experiments/notes/` altına yazın. Bu notlar doğrudan raporun "Tartışma" bölümüne dönüşür.
+**Hata analizi:** Her ölçümden sonra hibrit aramanın en çok kazandırdığı ve en çok kaybettirdiği 5'er soruya bakın, nedenini not edin. Bu notlar raporun "Tartışma" bölümüne dönüşür.
 
 ---
 
-## 7.7 Sonuç tablosu şablonu (rapor için)
+## 7.7 Sonuç tablosu şablonu
 
-| Yöntem | nDCG@10 | Recall@10 | Recall@50 | MRR@10 | p95 (ms) |
-|---|---|---|---|---|---|
-| BM25 (stemming yok) | | | | | |
-| BM25 (Snowball) | | | | | |
-| Dense (bge-m3) | | | | | |
-| RRF (k=60) | | | | | |
-| wRRF | | | | | |
-| Linear min-max (α*) | | | | | |
-| Linear z-score (α*) | | | | | |
-| CombSUM | | | | | |
-| CombMNZ | | | | | |
-| En iyi fusion + Reranker | | | | | |
-| Dinamik α | | | | | |
+| Yöntem | Recall@5 | MRR@10 | nDCG@10 | Kelime | Anlam | Karma |
+|---|---|---|---|---|---|---|
+| BM25 (ön işlemesiz) | | | | | | |
+| BM25 (Türkçe ön işleme) | | | | | | |
+| Vektör | | | | | | |
+| Hibrit: RRF | | | | | | |
+| Hibrit: doğrusal (α*) | | | | | | |
 
-*α\*: dev bölümünde bulunan en iyi α değeri*
+*Kelime, Anlam, Karma sütunları o tipteki sorularda Recall@5. α\*: `dev` sorularında bulunan en iyi ağırlık.*

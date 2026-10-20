@@ -60,10 +60,10 @@ Projede bu stratejileri **deneyip karşılaştıracağız**. Parçalama, arama b
 **Türkçe neden zor?** Türkçe **eklemeli** bir dildir. Tek bir kökten yüzlerce kelime türeyebilir:
 
 ```
-"vergi" → vergiler, vergisi, vergiden, vergilendirme, vergilendirilmesi, ...
+"ağrı" → ağrılar, ağrısı, ağrıdan, ağrıyan, ağrıyorsa, ağrıkesici, ...
 ```
 
-Kullanıcı "vergilendirme" diye ararsa ve belgede "vergisi" geçiyorsa, basit kelime araması bunları **eşleştiremez**.
+Kullanıcı "ağrıyorsa" diye ararsa ve belgede "ağrısı" geçiyorsa, basit kelime araması bunları **eşleştiremez**.
 
 **Çözümler:**
 - **Küçük harfe çevirme (lowercasing).** Dikkat, Türkçede tuzak var:
@@ -84,11 +84,11 @@ Bu yöntemlerin etkisini ölçmek **AS3** araştırma sorumuzun konusu.
 Kitabın arkasındaki **dizin** gibi düşünün: her kelimenin hangi sayfalarda geçtiği yazar.
 
 ```
-"vergi"   → [doc3, doc7, doc12]
-"istisna" → [doc7, doc9]
+"ağrı"  → [parça3, parça7, parça12]
+"baş"   → [parça7, parça9]
 ```
 
-"vergi istisna" diye arandığında iki listenin kesişimine ve birleşimine bakılır. Milyonlarca belgede bile milisaniyeler içinde sonuç döner.
+"baş ağrı" diye arandığında iki listenin kesişimine ve birleşimine bakılır. Milyonlarca belgede bile milisaniyeler içinde sonuç döner.
 
 ### TF-IDF
 Bir kelimenin bir belge için ne kadar önemli olduğunu ölçer:
@@ -111,8 +111,8 @@ f(q,D) : q kelimesinin D belgesinde geçme sayısı
 k1     : genelde 1.2–2.0,   b: genelde 0.75
 ```
 
-**Güçlü yanı:** Kesin terimler, kodlar, isimler, madde numaraları ("5510 sayılı kanun", "GVK 94. madde").
-**Zayıf yanı:** Anlamı bilmez. "araç" ile "taşıt"ı, "işten çıkarılma" ile "iş akdinin feshi"ni eşleştiremez.
+**Güçlü yanı:** Kesin terimler, kodlar, isimler, madde numaraları ("Parol", "parasetamol", "500 mg", "günde 3 kez").
+**Zayıf yanı:** Anlamı bilmez. "ateş düşürücü" ile "antipiretik"i, "emzirme" ile "süt verme"yi eşleştiremez.
 
 > Projede BM25'i **önce kendimiz sıfırdan yazacağız** (~80 satır Python). Sonra hazır kütüphaneyle karşılaştıracağız.
 
@@ -122,9 +122,9 @@ k1     : genelde 1.2–2.0,   b: genelde 0.75
 Bir metni, **anlamını temsil eden sayı dizisine** (vektöre) çeviren model çıktısıdır.
 
 ```
-"Araç muayene ücreti ne kadar?"       → [0.12, -0.45, 0.88, ..., 0.03]   (ör. 1024 sayı)
-"Taşıt kontrol bedeli hakkında bilgi" → [0.11, -0.43, 0.85, ..., 0.05]   ← çok yakın!
-"Bugün hava güzel"                    → [-0.70, 0.22, -0.10, ..., 0.91]  ← uzak
+"Emzirirken bu ilacı içebilir miyim?"   → [0.12, -0.45, 0.88, ..., 0.03]   (ör. 1024 sayı)
+"Süt verme döneminde kullanımı"         → [0.11, -0.43, 0.85, ..., 0.05]   ← çok yakın!
+"Bugün hava güzel"                      → [-0.70, 0.22, -0.10, ..., 0.91]  ← uzak
 ```
 
 Anlamca benzer metinlerin vektörleri uzayda **birbirine yakın** durur. Kelimeleri hiç ortak olmasa bile.
@@ -144,7 +144,7 @@ Vektörler önceden normalize edilirse (uzunlukları 1 yapılırsa) kosinüs ben
 Soru ve belgeler **ayrı ayrı** vektöre çevrilir. Belgeler önceden bir kez çevrilip saklanır. Arama anında yalnızca soru çevrilir ve en yakın vektörler bulunur. Bu yüzden hızlıdır.
 
 **Güçlü yanı:** Eş anlamlılar, farklı ifade biçimleri, doğal dil soruları.
-**Zayıf yanı:** Kesin kodlar, nadir özel isimler, sayılar. "5510" ile "5520"yi neredeyse aynı görebilir.
+**Zayıf yanı:** Kesin kodlar, nadir özel isimler, sayılar. "25 mg" ile "50 mg"ı neredeyse aynı görebilir.
 
 ## 2.7 Vektör Veritabanı ve Yaklaşık En Yakın Komşu (ANN)
 
@@ -154,16 +154,16 @@ Soru ve belgeler **ayrı ayrı** vektöre çevrilir. Belgeler önceden bir kez �
 
 **Vektör veritabanı** (Qdrant, Milvus, pgvector, ...) vektörleri saklar, ANN indeksini yönetir ve filtreleme yapar ("sadece 2024 sonrası belgeler" gibi).
 
-> Projede önce **NumPy ile brute force** arama yazacağız. Böylece işin özünü göreceğiz. Sonra Qdrant'a geçip hız farkını ölçeceğiz.
+> Bizim korpusumuz birkaç bin parçadan oluşacağı için **NumPy ile brute force** arama yeterli. Hem işin özünü görürüz hem de ayrı bir veritabanına gerek kalmaz. Vektör veritabanı ancak ürün aşamasında belge sayısı çok artarsa gündeme gelir.
 
 ## 2.8 Hibrit Arama ve Birleştirme (Fusion)
 
 **Fikir:** BM25 ile vektör araması **farklı hatalar** yapar. İkisini birleştirmek, birinin kaçırdığını diğerinin yakalamasını sağlar.
 
 ```
-Soru: "5510 sayılı kanuna göre işten çıkarılan işçinin hakları"
-  BM25    → "5510" ve "kanun" kelimelerini yakalar
-  Vektör  → "işten çıkarılma" ≈ "iş akdinin feshi" anlamını yakalar
+Soru: "Parol emzirirken kullanılır mı?"
+  BM25    → "Parol" kelimesini yakalar, doğru ilacın talimatına gider
+  Vektör  → "emzirirken" ≈ "süt verme döneminde" anlamını yakalar
   Hibrit  → İkisini de içeren belgeyi en üste taşır
 ```
 
@@ -197,13 +197,13 @@ Aşağıdaki belgelere dayanarak soruyu cevapla.
 Belgelerde cevap yoksa "Bu bilgi belgelerde bulunmuyor" de.
 Her cümlenin sonunda kullandığın belgeyi [1], [2] biçiminde belirt.
 
-[1] (Kaynak: GVK Madde 94) ... metin ...
-[2] (Kaynak: GİB Özelge 2024/123) ... metin ...
+[1] (Kaynak: Parol KT, "Hamilelik ve emzirme" bölümü) ... metin ...
+[2] (Kaynak: Parol KT, "Kullanmadan önce dikkat edilmesi gerekenler") ... metin ...
 
 Soru: ...
 ```
 
-**Kaynak göstermek** ürünün güvenilirliği için şarttır. Kullanıcı cevabı belgeden **doğrulayabilmelidir**. Hukuk ve finans gibi alanlarda kaynaksız cevap kullanılamaz.
+**Kaynak göstermek** ürünün güvenilirliği için şarttır. Kullanıcı cevabı belgeden **doğrulayabilmelidir**. Sağlık gibi alanlarda kaynaksız cevap kullanılamaz.
 
 ## 2.11 Değerlendirme (kısa giriş)
 
@@ -222,10 +222,10 @@ Ayrıntılar → [Değerlendirme](07-degerlendirme.md)
 
 Bu soruları birbirinize sorun. Ezberden değil, kendi cümlelerinizle cevaplayın.
 
-1. RAG olmadan bir LLM'e şirketinizin izin yönetmeliğini sorsanız ne olur? Neden?
+1. RAG olmadan bir LLM'e piyasaya yeni çıkmış bir ilacın kullanma talimatını sorsanız ne olur? Neden?
 2. "Kitaplarımızdan" kelimesi BM25'te neden sorun çıkarır? İki farklı çözümünü söyleyin.
 3. BM25'teki `b` parametresi 0 olsaydı ne değişirdi?
-4. "GVK 94. madde" sorusunda vektör araması neden zorlanabilir?
+4. "Arveles 25 mg" sorusunda vektör araması neden zorlanabilir?
 5. BM25 puanı ile kosinüs benzerliğini neden doğrudan toplayamayız?
 6. Cross-encoder bu kadar iyiyse neden 1 milyon belgenin hepsine uygulamıyoruz?
 7. Bir parça çok küçük olursa ne kaybederiz? Çok büyük olursa ne kaybederiz?

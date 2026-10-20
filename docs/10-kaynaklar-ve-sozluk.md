@@ -4,57 +4,44 @@
 
 ## 10.1 Okunacak makaleler
 
-Önem sırasına göre dizildi. ⭐ işaretliler mutlaka okunmalı ve raporun literatür bölümünde yer almalı.
+⭐ işaretliler mutlaka okunmalı ve raporun literatür bölümünde yer almalı.
 
-### RAG ve genel bakış
+### Projemize en yakın çalışmalar
+- ⭐ Jamil, Kavak, **İlhan Omurca**, Fotouhi (2026). *Design and Evaluation of a Source-Grounded Medical LLM for Clinical Decision Support and Patient Care in Trustworthy Diagnostic Systems.* Diagnostics. [doi:10.3390/diagnostics16193142](https://doi.org/10.3390/diagnostics16193142). **Danışmanımızın TurkishMedLLM çalışması:** 210.791 Türkçe tıbbi soru-cevap ve 22.135 hastane makalesi üzerinde vektör tabanlı RAG
+- ⭐ Xiong, Jin, Lu, Zhang (2024). *Benchmarking Retrieval-Augmented Generation for Medicine.* [arXiv:2402.13178](https://arxiv.org/abs/2402.13178). **MedRAG:** tıpta BM25, MedCPT ve bunların RRF ile birleşimi
+- ⭐ Bruch, Gai, Ingber (2023). *An Analysis of Fusion Functions for Hybrid Retrieval.* ACM TOIS. [arXiv:2210.11934](https://arxiv.org/abs/2210.11934). **RRF ile doğrusal birleştirmenin karşılaştırması:** doğrusal birleştirme daha iyi ve az örnekle ayarlanabiliyor
+- Aljohani, Alsanoosy (2026). *Enhancing Medical Question Answering with LLMs via a Hybrid Retrieval-Augmented Generation Framework.* Information. [doi:10.3390/info17020133](https://doi.org/10.3390/info17020133). Tıbbi soru-cevapta BM25 + MedCPT
+- Köse ve ark. (2026). *RAGTurk: Best Practices for Retrieval Augmented Generation in Turkish.* SIGTURK. [ACL Anthology](https://aclanthology.org/2026.sigturk-1.15/). Türkçe RAG aşamalarının karşılaştırması
+- Sun ve ark. (2026). *Retrieval-augmented generation for medication safety: A case study using drug package inserts.* Int. J. Medical Informatics. [PubMed](https://pubmed.ncbi.nlm.nih.gov/42435614/). İlaç kullanma talimatlarıyla RAG; uzman denetiminin gerekliliği
+- Lu, Ma, Hall (2022). *Zero-shot Hybrid Retrieval and Reranking Models for Biomedical Literature.* CLEF. [Google Research](https://research.google/pubs/zero-shot-hybrid-retrieval-and-reranking-models-for-biomedical-literature/). Biyomedikal aramada hibrit ve RRF
+
+### Temeller
 - ⭐ Lewis ve ark. (2020). *Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks.* NeurIPS. **RAG'i tanımlayan makale**
-- ⭐ Gao ve ark. (2023). *Retrieval-Augmented Generation for Large Language Models: A Survey.* arXiv. **Alanın genel haritası**
-
-### Kelime tabanlı arama
 - ⭐ Robertson & Zaragoza (2009). *The Probabilistic Relevance Framework: BM25 and Beyond.* Foundations and Trends in IR
-- Manning, Raghavan & Schütze (2008). *Introduction to Information Retrieval.* Cambridge. **Ücretsiz çevrimiçi ders kitabı.** 1, 2, 6 ve 8. bölümler projeyle doğrudan ilgili
-
-### Vektörel arama
-- ⭐ Karpukhin ve ark. (2020). *Dense Passage Retrieval for Open-Domain Question Answering.* EMNLP
-- Chen ve ark. (2024). *BGE M3-Embedding: Multi-Lingual, Multi-Functionality, Multi-Granularity Text Embeddings.* arXiv
-- Malkov & Yashunin (2018). *Efficient and Robust Approximate Nearest Neighbor Search Using HNSW Graphs.* IEEE TPAMI
-
-### Birleştirme (fusion): projenin çekirdeği
 - ⭐ Cormack, Clarke & Büttcher (2009). *Reciprocal Rank Fusion Outperforms Condorcet and Individual Rank Learning Methods.* SIGIR. **RRF**
-- ⭐ Bruch, Gai & Ingber (2023). *An Analysis of Fusion Functions for Hybrid Retrieval.* ACM TOIS. **RRF ile doğrusal birleştirmenin karşılaştırması. Bizim projeye en yakın makale**
-- Fox & Shaw (1994). *Combination of Multiple Searches.* TREC-2. **CombSUM, CombMNZ**
-- Bassani & Romelli (2022). *ranx.fuse: A Python Library for Metasearch.* CIKM. **Fusion yöntemleri kataloğu**
+- Karpukhin ve ark. (2020). *Dense Passage Retrieval for Open-Domain Question Answering.* EMNLP
+- Manning, Raghavan & Schütze (2008). *Introduction to Information Retrieval.* Cambridge. Ücretsiz çevrimiçi ders kitabı; 1, 2, 6 ve 8. bölümler
+- Thakur ve ark. (2021). *BEIR: A Heterogeneous Benchmark for Zero-shot Evaluation of Information Retrieval Models.* NeurIPS
+- Baysan & Güngör (2025). *TR-MTEB: A Comprehensive Benchmark and Embedding Model Suite for Turkish Sentence Representations.* EMNLP Findings. [ACL Anthology](https://aclanthology.org/2025.findings-emnlp.471.pdf). Türkçe arama test setleri, NFCorpus-TR dahil
 
-### Yeniden sıralama ve gelişmiş yöntemler
-- ⭐ Nogueira & Cho (2019). *Passage Re-ranking with BERT.* arXiv. **Cross-encoder reranking**
-- Formal ve ark. (2021). *SPLADE: Sparse Lexical and Expansion Model for First Stage Ranking.* SIGIR
-- Khattab & Zaharia (2020). *ColBERT: Efficient and Effective Passage Search via Contextualized Late Interaction over BERT.* SIGIR
-- Gao ve ark. (2022). *Precise Zero-Shot Dense Retrieval without Relevance Labels.* **HyDE**
-- Dinamik α için: Google Scholar'da *"dynamic alpha" hybrid retrieval* ve *"query-adaptive fusion"* diye arayın. 2024–2025'te bu yönde çalışmalar var
+> **Makale okuma yöntemi:** Önce özet, giriş ve sonuç; sonra şekil ve tablolar; gerekirse yöntem bölümü. Her makale için `docs/literatur/` altına 5 satırlık özet yazın: problem, yöntem, sonuç, bizim projeye etkisi.
 
-### Değerlendirme
-- ⭐ Thakur ve ark. (2021). *BEIR: A Heterogeneous Benchmark for Zero-shot Evaluation of Information Retrieval Models.* NeurIPS Datasets & Benchmarks
-- Es ve ark. (2023). *RAGAS: Automated Evaluation of Retrieval Augmented Generation.* arXiv
-- Bassani (2022). *ranx: A Blazing-Fast Python Library for Ranking Evaluation and Comparison.* ECIR
-- Smucker, Allan & Carterette (2007). *A Comparison of Statistical Significance Tests for Information Retrieval Evaluation.* CIKM
-
-> **Makale okuma yöntemi:** Önce özet, giriş ve sonuç kısmını okuyun. Sonra şekil ve tablolara bakın. Ancak gerekirse yöntem bölümünü okuyun. Her makale için `docs/literatur/` altına 5 satırlık özet yazın: problem, yöntem, sonuç, bizim projeye etkisi.
-
-## 10.2 Dokümantasyonlar
+## 10.2 Veri setleri ve dokümantasyon
 
 | Konu | Kaynak |
 |---|---|
-| Python proje yönetimi | docs.astral.sh/uv |
-| Embedding ve cross-encoder | sbert.net |
-| Model karşılaştırma | MTEB Leaderboard (Hugging Face) |
-| Hugging Face temel kurs | huggingface.co/learn |
-| Vektör veritabanı | qdrant.tech/documentation |
-| BM25 kütüphanesi | github.com/xhluca/bm25s |
-| Metrikler ve fusion | github.com/AmenRa/ranx |
-| Yerel LLM | ollama.com |
-| API | fastapi.tiangolo.com |
-| Docker | docs.docker.com/get-started |
-| Git dalları (interaktif) | learngitbranching.js.org |
+| Kullanma talimatları | [TİTCK KÜB / KT Sorgulama Portalı](https://www.titck.gov.tr/kubkt) |
+| Türkçe tıbbi soru-cevap | [MedTurkQuAD](https://huggingface.co/datasets/incidelen/MedTurkQuAD) |
+| Türkçe tıbbi arama testi | [NFCorpus-TR](https://huggingface.co/datasets/trmteb/nfcorpus-tr) |
+| Türkçe sağlık arama testi | [TurkishRAGEval](https://huggingface.co/datasets/mteb/turkish-rag-eval) |
+| Yedek korpus | [Türk hastane makaleleri](https://huggingface.co/datasets/alibayram/turkish-hospital-medical-articles) |
+| Python proje yönetimi | [docs.astral.sh/uv](https://docs.astral.sh/uv/) |
+| Arayüz | [docs.streamlit.io](https://docs.streamlit.io) |
+| Embedding | [sbert.net](https://sbert.net) |
+| Model karşılaştırma | [MTEB Leaderboard](https://huggingface.co/spaces/mteb/leaderboard) |
+| BM25 kütüphanesi | [github.com/xhluca/bm25s](https://github.com/xhluca/bm25s) |
+| Yerel dil modeli | [ollama.com](https://ollama.com) |
+| Git dalları (interaktif) | [learngitbranching.js.org](https://learngitbranching.js.org) |
 
 ## 10.3 Sözlük
 
