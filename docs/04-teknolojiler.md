@@ -1,179 +1,112 @@
 # 4. Teknolojiler
 
-Bu doküman projede kullanacağımız her teknolojiyi listeler. Her teknoloji için **ne olduğu, neden seçildiği, alternatifi ve ne zaman öğrenileceği** yazar.
+Bu doküman projede kullanacağımız her teknolojiyi, **ne işe yaradığını, neden seçildiğini ve hangi aşamada geleceğini** anlatır.
 
-> **Not:** Model adları ve sürümleri hızla değişir. Burada yazanlar **başlangıç adaylarıdır**. Son karar her zaman **kendi test setimizde yapacağımız ölçümle** verilecek.
+> **İlke:** İhtiyaç duymadan teknoloji eklemiyoruz. Her yeni araç bir sorunu çözdüğü için gelir.
 
 ---
 
 ## 4.1 Genel bakış
 
 ```
-┌────────────────────────────────────────────────────────────────────┐
-│ ARAYÜZ       Streamlit (prototip)  →  Next.js + TypeScript (ürün)  │
-├────────────────────────────────────────────────────────────────────┤
-│ API          FastAPI · Pydantic · Uvicorn                          │
-├────────────────────────────────────────────────────────────────────┤
-│ ÇEKİRDEK     Python 3.12 · hybridrag paketi                        │
-│              BM25: kendi kodumuz → bm25s                           │
-│              Embedding: sentence-transformers (bge-m3, e5, ...)    │
-│              Reranker: cross-encoder (bge-reranker-v2-m3, ...)     │
-│              Fusion: kendi kodumuz (+ ranx ile doğrulama)          │
-│              LLM: Ollama (Qwen, Gemma, Llama ...)                  │
-├────────────────────────────────────────────────────────────────────┤
-│ VERİ         Qdrant (vektör) · PostgreSQL (meta veri, log)         │
-│              Redis (önbellek, v3)                                  │
-├────────────────────────────────────────────────────────────────────┤
-│ DEĞERLENDİRME ranx · pandas · matplotlib · RAGAS · MLflow          │
-├────────────────────────────────────────────────────────────────────┤
-│ ALTYAPI      uv · Git/GitHub · Docker Compose · GitHub Actions     │
-│              pytest · ruff · mypy · pre-commit · Langfuse          │
-└────────────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────┐
+│ ARAYÜZ        Streamlit                                       │
+├──────────────────────────────────────────────────────────────┤
+│ ÇEKİRDEK      Python 3.12                                     │
+│               PDF okuma: pypdf                                │
+│               BM25: kendi kodumuz (bm25s ile doğrulama)       │
+│               Vektör: sentence-transformers + NumPy           │
+│               Cevap: Ollama ile yerel dil modeli (Aşama 6)    │
+├──────────────────────────────────────────────────────────────┤
+│ GELİŞTİRME    uv · Git/GitHub · ruff · GitHub Actions         │
+└──────────────────────────────────────────────────────────────┘
 ```
 
 ## 4.2 Ayrıntılı tablo
 
-### Dil ve geliştirme ortamı
+### Geliştirme ortamı
 
-| Teknoloji | Ne işe yarar | Neden bu | Alternatif | Faz |
+| Teknoloji | Ne işe yarıyor | Neden bu | Aşama |
+|---|---|---|---|
+| **Python 3.12** | Projenin dili | Yapay zekâ ve arama kütüphanelerinin hepsi Python'da. 3.12 kararlı ve kütüphanelerin hepsi destekliyor | 0 |
+| **uv** | Python'u ve kütüphaneleri kurar, ortamı yönetir | Tek komutla ikimizde de birebir aynı ortam (`uv.lock`) | 0 |
+| **Git + GitHub** | Sürüm kontrolü, PR ile ortak çalışma | Zorunlu | 0 |
+| **ruff** | Kod stili ve sık hataları kontrol eder | Hızlı, tek araç; CI'da her PR'da çalışır | 0 |
+| **GitHub Actions** | Her PR'da ruff'ı otomatik çalıştırır | Hatalı kod `main`'e girmesin | 0 |
+| **VS Code** | Editör | İkimiz de kullanıyoruz | 0 |
+
+### Veri
+
+| Teknoloji | Ne işe yarıyor | Neden bu | Alternatif | Aşama |
 |---|---|---|---|---|
-| **Python 3.12** | Ana dil | Yapay zekâ ve bilgi erişimi ekosisteminin tamamı Python'da | — | 0 |
-| **uv** | Paket ve sanal ortam yöneticisi | Çok hızlı, `pyproject.toml` + kilit dosyası ile ikinizde de birebir aynı ortam | pip + venv, Poetry | 0 |
-| **Git + GitHub** | Sürüm kontrolü, iş birliği | Zorunlu | — | 0 |
-| **VS Code** | Editör | İkiniz de kullanıyorsunuz, Python + Jupyter desteği | PyCharm | 0 |
-| **Jupyter** | Keşif ve analiz | Veriyi görerek tanımak için | — | 0 |
-
-### Veri toplama ve ayrıştırma
-
-| Teknoloji | Ne işe yarar | Neden bu | Alternatif | Faz |
-|---|---|---|---|---|
-| **httpx** | HTTP istekleri | Modern, async destekli | requests | 1–2 |
-| **Playwright** | JavaScript ile yüklenen sayfaları gezme | Bazı kamu siteleri dinamik | Selenium | 2 (gerekirse) |
-| **trafilatura** | HTML'den ana metni çıkarma | Menü ve reklam gibi gürültüyü iyi temizler | BeautifulSoup (elle) | 2 |
-| **PyMuPDF** | PDF'ten metin çıkarma | Hızlı, sayfa ve konum bilgisi verir | pdfplumber | 2 |
-| **Docling** | Karmaşık PDF (tablo, düzen) ayrıştırma | Yapıyı (başlık, tablo) korur | Unstructured | 2 (gerekirse) |
-
-### Türkçe metin işleme
-
-| Teknoloji | Ne işe yarar | Neden bu | Alternatif | Faz |
-|---|---|---|---|---|
-| **Kendi `turkish.py`'miz** | Türkçe küçük harf, normalizasyon | Python'un `lower()` fonksiyonu Türkçede hatalı | — | 3 |
-| **snowballstemmer** (Turkish) | Kural tabanlı kök bulma | Hafif, hızlı | — | 3 |
-| **Zeyrek** | Morfolojik analiz (Zemberek'in Python portu) | Daha doğru kök bulur | Zemberek (Java) | 3 (deney) |
+| **pypdf** | PDF'ten metin çıkarır | Saf Python, kurulumu kolay | PyMuPDF (daha hızlı, düzen bilgisi verir) | 1 |
+| **JSONL** | Parçaları satır satır saklar | Okunabilir, her satır bağımsız | CSV | 1 |
 
 ### Arama
 
-| Teknoloji | Ne işe yarar | Neden bu | Alternatif | Faz |
-|---|---|---|---|---|
-| **Kendi BM25'imiz** | Öğrenme amaçlı BM25 | Algoritmayı içinden anlamak için | — | 3 |
-| **bm25s** | Üretim için hızlı BM25 | Saf Python ve çok hızlı | rank_bm25 (yavaş), OpenSearch | 3 |
-| **sentence-transformers** | Embedding ve cross-encoder modellerini çalıştırma | Standart kütüphane, Hugging Face ile entegre | Hugging Face transformers (alt seviye) | 4 |
-| **NumPy (brute force)** | Öğrenme amaçlı vektör arama | İşin özünü görmek için | FAISS | 4 |
-| **Qdrant** | Vektör veritabanı | Açık kaynak, Docker ile tek komutla kurulur, filtreleme ve seyrek (sparse) vektör desteği var, Rust ile yazılmış ve hızlı | pgvector, Milvus, Weaviate, Chroma | 4 |
-| **OpenSearch** | Hem BM25 hem vektör içeren arama motoru | Ürün aşamasında Türkçe analizörüyle BM25'i ölçeklemek için | Elasticsearch | 9 (isteğe bağlı) |
-
-### Modeller (adaylar, ölçerek seçilecek)
-
-| Tür | Aday | Lisans (kontrol edin!) | Not |
+| Teknoloji | Ne işe yarıyor | Neden bu | Aşama |
 |---|---|---|---|
-| Embedding | `BAAI/bge-m3` | MIT | Çok dilli, 8192 token, aynı modelden dense + sparse + çok-vektör çıktısı |
-| Embedding | `intfloat/multilingual-e5-large` | MIT | Güçlü temel model. Girdilere `query:` / `passage:` öneki ister |
-| Embedding | `Qwen/Qwen3-Embedding-0.6B` (ve büyükleri) | Apache 2.0 | Yeni nesil, çok dilli |
-| Embedding | `google/embeddinggemma-300m` | Gemma şartları | Küçük ve hızlı |
-| Embedding | Türkçeye ince ayarlı modeller | Değişken | Hugging Face'te "turkish sentence embedding" diye arayın |
-| Reranker | `BAAI/bge-reranker-v2-m3` | Apache 2.0 | Çok dilli cross-encoder, başlangıç için ideal |
-| Reranker | `Qwen/Qwen3-Reranker-0.6B` | Apache 2.0 | Yeni nesil |
-| Reranker | `jinaai/jina-reranker-v2-base-multilingual` | **CC-BY-NC**: ticari kullanıma kapalı | Sadece akademik karşılaştırma için |
-| LLM | Qwen3 (4B / 8B / 14B) | Apache 2.0 | Türkçesi iyi |
-| LLM | Gemma 3 (4B / 12B) | Gemma şartları | Türkçesi iyi |
-| LLM | Llama 3.x (8B) | Llama lisansı | Yaygın |
-| LLM | Türkçe odaklı modeller (ör. ytu-ce-cosmos) | Değişken | Denenebilir |
+| **Kendi BM25'imiz** | Kelime eşleşmesiyle arama | Algoritmayı içinden anlamak için önce kendimiz yazıyoruz | 2 |
+| **bm25s** | Hazır, hızlı BM25 | Kendi kodumuzun doğru sonuç verdiğini kontrol etmek için | 2 |
+| **sentence-transformers** | Metni vektöre çeviren modelleri çalıştırır | Standart kütüphane, Hugging Face modelleriyle doğrudan çalışır | 3 |
+| **NumPy** | Vektörler arası benzerliği hesaplar | Birkaç bin parça için yeterince hızlı, ayrı veritabanı gerekmiyor | 3 |
 
-> **Lisans kuralı:** Ürünü piyasaya sürebilmek için kullandığımız **her model ve veri setinin lisansı ticari kullanıma izin vermeli**. Seçilen her modelin lisansını bu tabloya ve rapora yazın.
+### Cevap üretimi
 
-**Model seçim yöntemi (Faz 4):**
-1. [MTEB liderlik tablosunda](https://huggingface.co/spaces/mteb/leaderboard) çok dilli ya da Türkçe retrieval görevlerinde iyi olan 4–5 adayı seçin.
-2. Hepsiyle **kendi test setimizde** Recall@10 ve nDCG@10 ölçün.
-3. Hız (parça/saniye) ve bellek kullanımını da kaydedin.
-4. Başarı, hız ve lisansa birlikte bakarak karar verin.
-
-### LLM çalıştırma
-
-| Teknoloji | Ne işe yarar | Neden bu | Alternatif | Faz |
-|---|---|---|---|---|
-| **Ollama** | Açık modelleri yerelde çalıştırma | Tek komutla kurulum, Mac'te Metal GPU desteği, OpenAI uyumlu API | llama.cpp, LM Studio | 7 |
-| **vLLM** | Üretimde yüksek verimli LLM sunucusu | Çok kullanıcıda hızlı | TGI | 9 (GPU sunucuda) |
-| **Ticari API** (Claude, GPT) | Karşılaştırma ve yedek | Kaliteyi kıyaslamak için | — | 7 (hoca izin verirse) |
-
-> LLM istemcisini, OpenAI uyumlu API üzerinden **tek bir arayüzle** yazın. Böylece Ollama, vLLM ve ticari API arasında yalnızca yapılandırmayla geçiş yapılır.
-
-### Değerlendirme ve deney
-
-| Teknoloji | Ne işe yarar | Neden bu | Faz |
+| Teknoloji | Ne işe yarıyor | Neden bu | Aşama |
 |---|---|---|---|
-| **Kendi `metrics.py`'miz** | Recall, MRR, nDCG | Formülleri içinden anlamak için | 2–3 |
-| **ranx** | Bilgi erişimi metrikleri, istatistiksel testler, **hazır fusion yöntemleri** | Kendi kodumuzun sonuçlarını doğrulamak için birebir uygun | 3–6 |
-| **pandas, matplotlib, seaborn** | Sonuç tabloları ve grafikler | Standart | 3+ |
-| **RAGAS** | Üretilen cevabın kalitesi (sadakat, ilgililik) | LLM cevabını ölçmek için | 7 |
-| **MLflow** | Deney takibi (parametre, metrik, çıktı) | Yüzlerce deneyi karıştırmamak için | 5+ |
+| **Ollama** | Açık kaynak dil modelini kendi bilgisayarımızda çalıştırır | Veri dışarı çıkmaz, ücretsiz, Mac'te hızlı | 6 |
 
-### API, arayüz, ürün
+### Arayüz
 
-| Teknoloji | Ne işe yarar | Neden bu | Alternatif | Faz |
-|---|---|---|---|---|
-| **FastAPI** | REST API | Hızlı, otomatik dokümantasyon (Swagger), Pydantic ile tip güvenliği | Flask, Django | 8 |
-| **Streamlit** | Hızlı prototip arayüz | Birkaç satır Python ile demo, hocaya göstermek için ideal | Gradio | 5–8 |
-| **Next.js + TypeScript + Tailwind** | Ürün arayüzü | Selim'in deneyimi var (maas-radar), modern ve hızlı | Angular (Selim stajda kullandı), React + Vite | 9 |
-| **PostgreSQL** | Kullanıcılar, belgeler, sorgu geçmişi | Güvenilir, standart | — | 8–9 |
-| **SQLAlchemy + Alembic** | ORM ve veritabanı göçleri (migration) | Python standardı | SQLModel | 8–9 |
-| **Redis** | Önbellek (aynı soruya tekrar LLM çağırmamak) | Basit, hızlı | — | 9 |
-| **JWT / OAuth2** | Kullanıcı girişi | FastAPI ile yerleşik destek | — | 9 |
+| Teknoloji | Ne işe yarıyor | Neden bu | Aşama |
+|---|---|---|---|
+| **Streamlit** | Birkaç satır Python'la web arayüzü | Prototip ve demo için en hızlı yol | 0 |
 
-### Altyapı ve kalite
+## 4.3 Model adayları
 
-| Teknoloji | Ne işe yarar | Faz |
+Model adları hızla değişir. Aşağıdakiler **başlangıç adayları**; son karar kendi test setimizdeki ölçümle verilecek.
+
+| Tür | Aday | Not |
 |---|---|---|
-| **Docker + Docker Compose** | Tüm servisleri tek komutla ayağa kaldırma | 4 (Qdrant ile başlar), 8–9 (tamamı) |
-| **pytest** | Birim ve entegrasyon testleri | 3+ |
-| **ruff** | Lint ve format (kod stili) | 0 |
-| **mypy** | Tip kontrolü | 3+ |
-| **pre-commit** | Commit öncesi otomatik kontrol | 0 |
-| **GitHub Actions** | Her PR'da test ve lint çalıştırma (CI) | 3+ |
-| **Langfuse** | LLM çağrılarını izleme (istem, cevap, süre, maliyet) | 9 |
+| Embedding | `intfloat/multilingual-e5-base` | Çok dilli, Türkçe sağlık testinde iyi sonuç veriyor. Girdilere `query:` / `passage:` öneki ister |
+| Embedding | `BAAI/bge-m3` | Çok dilli, uzun metin destekli; daha büyük |
+| Embedding | Türkçeye özel arama modelleri (ör. `newmindai/Mursit-Large-TR-Retrieval`) | Türkçe sağlık testinde en iyi sonucu veren model; lisansı kontrol edilmeli |
+| Dil modeli | Qwen3 (4B / 8B) | Türkçesi iyi; danışmanımızın TurkishMedLLM çalışması da Qwen3-8B kullanıyor |
+| Dil modeli | Gemma 3 (4B / 12B) | Türkçesi iyi |
 
-## 4.3 Neden LangChain / LlamaIndex ile başlamıyoruz?
+Referans sonuçlar (Türkçe sağlık testi, nDCG@10): multilingual-e5-base 0,668; Mursit-Large-TR-Retrieval 0,781; BM25 0,494. Kaynak: [TurkishRAGEval](https://huggingface.co/datasets/mteb/turkish-rag-eval).
 
-Bu kütüphaneler RAG'i birkaç satırda kurmanızı sağlar. Ama:
+> **Lisans kuralı:** Ürünü yayınlayabilmek için kullandığımız her modelin ve verinin lisansı buna izin vermeli. Seçilen her modelin lisansı bu tabloya yazılacak.
 
-1. **Öğrenme hedefimize ters.** Her şeyi kapalı kutuda yaparlar. "Fusion nasıl çalışıyor?" sorusuna cevap veremeyiz.
-2. **Deney kontrolü zor.** Bilimsel karşılaştırma için her adımı (normalizasyon, k değeri, sıralama) ayrı ayrı kontrol etmemiz gerekiyor.
-3. **Projenin çekirdeği zaten bizim yazacağımız kısım.** Arama, birleştirme ve değerlendirme. Bunları bir kütüphaneye devredersek projede "biz" kalmaz.
+## 4.4 Bilerek eklemediklerimiz
 
-**Plan:** Çekirdeği kendimiz yazacağız. Faz 7 civarında aynı pipeline'ı LlamaIndex ile de kurup **kendi kodumuzla karşılaştırmak** raporda güzel bir bölüm olur.
-
-## 4.4 Donanım ihtiyacı
-
-| İş | Mac (Apple Silicon) | Ne zaman bulut GPU |
+| Teknoloji | Neden şimdi yok | Ne zaman gündeme gelir |
 |---|---|---|
-| BM25 indeksleme ve arama | Rahat | Hiçbir zaman |
-| Embedding, küçük korpus (< 50 bin parça) | Olur (MPS hızlandırma) | — |
-| Embedding, büyük korpus veya çok model karşılaştırması | Yavaş | **Google Colab / Kaggle** (ücretsiz GPU). Vektörleri dosyaya kaydedip indirin |
-| Reranking deneyleri | Olur, yavaş | Çok deney varsa Colab |
-| LLM (7–8B, 4-bit) | Olur (16 GB RAM ile rahat) | Canlıya alırken GPU sunucu |
+| Vektör veritabanı (Qdrant vb.) | Birkaç bin parça için NumPy yeterli | Belge sayısı on binleri geçerse |
+| FastAPI, Docker | Prototipte Streamlit tek başına yeterli | Ürünü başka uygulamalara açarken |
+| LangChain, LlamaIndex | Her şeyi kapalı kutuda yapıyorlar; aramayı ve birleştirmeyi biz anlamak ve kontrol etmek istiyoruz | Karşılaştırma amacıyla, isteğe bağlı |
+| Cross-encoder ile yeniden sıralama | Önce temel hibrit arama çalışmalı | Aşama 7'de, arama yetersiz kalırsa |
 
-## 4.5 Öğrenme sırası
+## 4.5 Donanım
 
-Teknolojileri aynı anda değil, **ihtiyaç duyuldukça** öğreneceğiz:
+Geliştirme bilgisayarı Apple M4, 16 GB bellek. Bu proje için yeterli:
+
+| İş | Durum |
+|---|---|
+| BM25 indeksleme ve arama | Rahat |
+| Birkaç bin parçanın embedding'ini çıkarmak | Birkaç dakika |
+| 4B–8B dil modelini Ollama ile çalıştırmak | Rahat (4-bit sürümler) |
+
+## 4.6 Öğrenme sırası
 
 ```
-Faz 0 : Git, GitHub, uv, ruff, Jupyter
-Faz 1 : httpx, veri lisansları, Markdown raporlama
-Faz 2 : trafilatura/PyMuPDF, JSONL, test seti tasarımı
-Faz 3 : BM25 (elle), Türkçe NLP, pytest, bm25s, ranx
-Faz 4 : embedding, sentence-transformers, NumPy, Docker, Qdrant
-Faz 5 : fusion yöntemleri, normalizasyon, deney yapılandırması (YAML), MLflow
-Faz 6 : cross-encoder, reranking
-Faz 7 : Ollama, istem mühendisliği, RAGAS
-Faz 8 : FastAPI, Streamlit, Docker Compose, PostgreSQL
-Faz 9 : Next.js, kimlik doğrulama, Redis, CI/CD, Langfuse, canlıya alma
+Aşama 0 : uv, Git/GitHub, PR akışı, ruff
+Aşama 1 : PDF'ten metin çıkarma, JSONL, parçalama
+Aşama 2 : BM25 (elle), Türkçe ön işleme
+Aşama 3 : embedding, sentence-transformers, NumPy
+Aşama 4 : birleştirme yöntemleri (RRF, doğrusal)
+Aşama 5 : test seti hazırlama, Recall / MRR / nDCG
+Aşama 6 : Ollama, istem yazma, kanıt kontrolü
+Aşama 7 : cevap değerlendirmesi
 ```
